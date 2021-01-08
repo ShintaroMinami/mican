@@ -8,6 +8,7 @@ Protein structure alignment program that can handle
 
 ## Author information
 Author: S. Minami, K. Sawada, and G. Chikenji
+
 Web Site: http://www.tbp.cse.nagoya-u.ac.jp/MICAN
 
 ## References
