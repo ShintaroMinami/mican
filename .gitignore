@@ -1,0 +1,6 @@
+# compiled files
+*/*.o
+
+# excutable binaries
+mican
+*/mican

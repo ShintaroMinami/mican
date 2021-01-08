@@ -1,29 +1,29 @@
 # MICAN
 Protein structure alignment program that can handle
-- M; multiple-chain complexs
-- I; inverse direction of SSEs
-- C; Ca only models
-- A; alternative alignments
-- N; non-sequential alignments
+- M: multiple-chain complexs
+- I: inverse direction of SSEs
+- C: Ca only models
+- A: alternative alignments
+- N: non-sequential alignments
 
 ## Author information
 Author: S. Minami, K. Sawada, and G. Chikenji
 Web Site: http://www.tbp.cse.nagoya-u.ac.jp/MICAN
 
 ## References
-- Reference 1: BMC Bioinformatics 2013, 14(24), S. Minami, K. Sawada, and G. Chikenji
-- Reference 2: Bioinformatics 2018, 34(19), S. Minami, K. Sawada, M Ota, and G. Chikenji
+1. BMC Bioinformatics 2013, 14(24), S. Minami, K. Sawada, and G. Chikenji
+2. Bioinformatics 2018, 34(19), S. Minami, K. Sawada, M Ota, and G. Chikenji
 
 ## License
 MIT
 
 # Compilation and usage
-1.To compile MICAN software: please type following command
+1. To compile MICAN software: please type following command
 ```
 % make
 ```
 
-2.To run MICAN software:
+2. To run MICAN software:
 ```
 % mican protein1 protein2 -a align.aln -o sup.pdb
 ```
