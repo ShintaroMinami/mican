@@ -1,5 +1,5 @@
 CC	= gcc
-CFLAGS  = -O3 -Wall #-static
+CFLAGS  = -O3 -Wall -static
 LIBS    = -lm
 VPATH   = src
 SRC     = $(shell ls $(VPATH)/*.c)
