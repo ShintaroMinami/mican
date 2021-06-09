@@ -32,7 +32,8 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/ShintaroMinami/mican",
     scripts=[
-        'scripts/mican_dbsearch'
+        'scripts/mican_dbsearch',
+        'scripts/mican'
     ],
     packages=setuptools.find_packages(),
     include_package_data=True,
