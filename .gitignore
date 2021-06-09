@@ -1,6 +1,9 @@
 # compiled files
 */*.o
-
 # excutable binaries
 mican
 */mican
+# pypi
+dist
+*.egg-info
+build
