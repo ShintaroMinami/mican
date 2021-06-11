@@ -21,7 +21,7 @@ class my_ext(build_ext):
             shutil.move(bin, outpath)
 
 setuptools.setup(
-    name="mican",
+    name="pymican",
     version=VERSION,
     author="Shintaro Minami",
     description="Non-sequential protein structure alignment algorithm",
