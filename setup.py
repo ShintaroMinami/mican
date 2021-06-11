@@ -2,11 +2,14 @@ import subprocess
 import glob
 import shutil
 import os
+from os import environ
+from dunamai import Version
 import setuptools
 from setuptools.extension import Extension
 from setuptools.command.build_ext import build_ext
 
-VERSION="1.1.0"
+git_version = Version.from_git().serialize(metadata=False)
+VERSION = environ['VERSION'] if 'VERSION' in environ else git_version
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
