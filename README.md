@@ -18,6 +18,11 @@ Web Site: http://www.tbp.cse.nagoya-u.ac.jp/MICAN
 ## License
 MIT
 
+# Easy instllation
+```
+pip install pymican
+```
+
 # Compilation and usage
 1. To compile MICAN software: please type following command
 ```
@@ -73,4 +78,48 @@ For more details, please read following usage.
  To visualize superposition:
    % mican protein1 protein2 -o sup.pdb
    % rasmol -script sup.pdb
+```
+
+# Usage as Python module
+1. install pymican
+```
+pip install pymican
+```
+2. usage
+```python
+from pymican import mican
+
+m = mican()
+
+outdict = m.align(pdb1=INPUT_PDBFILE_1, pdb2=IPUT_PDBFILE_2, options=EXTRAOPTIONS)
+```
+
+```python
+Paremeters
+  ----------
+  pdb1, pdb2 : str
+      Input PDB files
+  options : (str, [str,...]), default=[]
+      Extra potions for mican calculation.
+      For the option details please see (https://github.com/ShintaroMinami/mican).
+  Returns
+  -------
+  dict = {
+      'mode': ('sequential', 'rewirering', 'reverse'),
+      'pdb1': string,
+      'size1': int,
+      'pdb2': string,
+      'size2': int,
+      'nalign': int,
+      'rmsd': float,
+      'TMscore': float,
+      'sTMscore': float,
+      'seq-identity': float,
+      'DALIscore': float,
+      'SPscore': float,
+      'TMscore1': float, # TMscore normalized by size of protein1
+      'coverage1': float,
+      'TMscore2': float, # TMscore normalized by size of protein2
+      'coverage2': float
+  }
 ```
