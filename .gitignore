@@ -7,4 +7,4 @@ dist
 *.egg-info
 build
 # pycache
-*/__pycache__
+*/__pycache__/*
