@@ -1,1 +1,2 @@
 include src/*.c src/*.h Makefile
+include pymican/bin/*
