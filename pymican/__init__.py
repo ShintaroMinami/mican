@@ -1,36 +1,70 @@
-import ctypes as ct
 import os
-from typing import List
-import numpy as np
-from .cstruct import PYALIGN
+import subprocess
+from typing import List, Union
+from .parse_result import output2dict
+
 
 dir_script = os.path.dirname(os.path.realpath(__file__))
-LIBFILEPATH = os.path.abspath(dir_script+'/../mican.so')
+BINFILEPATH = os.path.abspath(dir_script+'/bin/mican')
 
 class mican:
-    def __init__(self):
-        # mican setup
-        self.libc = ct.cdll.LoadLibrary(LIBFILEPATH)
-        self.libc.pymain.restype = PYALIGN
-        self.libc.pymain.argtypes = ct.c_int, ct.POINTER(ct.c_char_p)
+    """
+    MICAN: non-sequential alignment algorithm
+
+    Attributes
+    ----------
+    binary : executable binary file path
+    """
+    def __init__(self, binary: str=BINFILEPATH):
+        """
+        Parameters
+        ----------
+        binary : executable binary file path
+        """
+        self.binary = binary
         return
 
-    def align(self, file1: str, file2: str, options: List[str]=[])->dict:
-        # arguments
-        args = [a.encode() for a in ['mican', file1, file2] + options]
-        args = (ct.c_char_p * len(args))(*args)
-        # mican calc
-        output = self.libc.pymain(len(args), args)
-        # prepare output dict
-        outdict = {
-            'naa_align': output.naa_align,
-            'rmsd': output.rmsd,
-            'TMscore_ave': output.TMscore_ave,
-            'TMscore_max': output.TMscore_max,
-            'TMscore_min': output.TMscore_min,
-            'seqID': output.seqID,
-            'rot': np.ctypeslib.as_array(output.rot, shape=(4,4))[1:,1:],
-            'vec': np.ctypeslib.as_array(output.vec, shape=(4))[1:]
+    def align(self, pdb1: str, pdb2: str, options: Union[str, List[str]]=[])->dict:
+        """
+        Alignment calculation
+
+        Paremeters
+        ----------
+        pdb1, pdb2 : str
+            Input PDB files
+        options : (str, [str,...]), default=[]
+            Extra potions for mican calculation.
+            For the option details please see (https://github.com/ShintaroMinami/mican).
+        Returns
+        -------
+        dict = {
+            'mode': ('sequential', 'rewirering', 'reverse'),
+            'pdb1': string,
+            'size1': int,
+            'pdb2': string,
+            'size2': int,
+            'nalign': int,
+            'rmsd': float,
+            'TMscore': float,
+            'sTMscore': float,
+            'seq-identity': float,
+            'DALIscore': float,
+            'SPscore': float,
+            'TMscore1': float, # TMscore normalized by size of protein1
+            'coverage1': float,
+            'TMscore2': float, # TMscore normalized by size of protein2
+            'coverage2': float
         }
+        """
+        # arguments
+        options = options if type(options) == str else ' '.join(options)
+        args = [pdb1, pdb2] + options.split()
+        # mican calc
+        process = subprocess.Popen([self.binary]+args,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
         # output
-        return outdict
+        output, _ = process.communicate()
+        output = output.decode('utf-8')
+        # return
+        return output2dict(output)

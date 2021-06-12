@@ -2,8 +2,9 @@
 */*.o
 # excutable binaries
 mican
-*/mican
 # pypi
 dist
 *.egg-info
 build
+# pycache
+*/__pycache__
