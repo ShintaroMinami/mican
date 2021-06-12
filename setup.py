@@ -6,8 +6,9 @@ import setuptools
 from setuptools.extension import Extension
 from setuptools.command.build_ext import build_ext
 
-git_version = Version.from_git().serialize(metadata=False)
-VERSION = os.environ['VERSION'] if 'VERSION' in os.environ else git_version
+#git_version = Version.from_git().serialize(metadata=False)
+#VERSION = os.environ['VERSION'] if 'VERSION' in os.environ else git_version
+VERSION = 'v1.5.0'
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
