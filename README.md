@@ -87,14 +87,18 @@ pip install pymican
 ```
 2. usage
 ```python
+# import module
 from pymican import mican
 
+# create object
 m = mican()
 
+# calculate alignment
 outdict = m.align(pdb1=INPUT_PDBFILE_1, pdb2=IPUT_PDBFILE_2, options=EXTRAOPTIONS)
 ```
 
-```python
+Attributes
+```
 Paremeters
   ----------
   pdb1, pdb2 : str
