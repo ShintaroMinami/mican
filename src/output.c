@@ -94,57 +94,68 @@ void output(int naa_q, int naa_t, int natom_q, int natom_t, RESDAT *resdat_q,
     TMloc_mod = align[input.isub_out - 1].TMloc_mod;
 
     printf(" TM-score=%5.3f, Coverage=%5.1f%% (if normalized by size of Protein1)\n",
-	   TMscore1, coverage1);
+	    TMscore1, coverage1);
     printf(" TM-score=%5.3f, Coverage=%5.1f%% (if normalized by size of Protein2)\n",
-	   TMscore2, coverage2);
+	    TMscore2, coverage2);
     printf(" sTMscore(Nali)=%5.3f (sTMscore normalized by aligned length)\n",
-	   TMloc_mod);
+	    TMloc_mod);
     printf(" C3score=%5.3f (Chain-to-Chain Correspondence score)\n",
-           align[input.isub_out-1].C3score);
+      align[input.isub_out-1].C3score);
     printf(" Dali-score=%7.2f, Dali Zscore=%5.2f\n",
-	   align[input.isub_out-1].Daliscore, align[input.isub_out-1].DaliZ);
+	    align[input.isub_out-1].Daliscore, align[input.isub_out-1].DaliZ);
     
     /****  chain results  ****/
     printf(" ----- Results for each chain -----\n");
     for (jchain = 1; jchain <= nchain1; jchain++) {
       if (input.qtchange == OFF) {
-	coverage1 = align_chain[input.isub_out - 1][0][jchain].cover_t;
+	      coverage1 = align_chain[input.isub_out - 1][0][jchain].cover_t;
       } else {
-	coverage1 = align_chain[input.isub_out - 1][jchain][0].cover_q;
+	      coverage1 = align_chain[input.isub_out - 1][jchain][0].cover_q;
       }
       if (coverage1 > 0.0) {
-	if (input.qtchange == OFF) {
-	  chainID1 = pdbdat_t.chainID_org[jchain];
-	  naa1 = pdbdat_t.naa[jchain];
-	} else {
-	  chainID1 = pdbdat_q.chainID_org[jchain];
-	  naa1 = pdbdat_q.naa[jchain];
-	}
-	printf(" [P1:%1s (size %4d)] Coverage=%5.1f%% (",
-	       chainID1, naa1, coverage1);
+	      if (input.qtchange == OFF) {
+	        chainID1 = pdbdat_t.chainID_org[jchain];
+	        naa1 = pdbdat_t.naa[jchain];
+	      } else {
+	        chainID1 = pdbdat_q.chainID_org[jchain];
+	        naa1 = pdbdat_q.naa[jchain];
+	      }
+	      printf(" [P1:%1s (size %4d)] Coverage=%5.1f%% (",
+	        chainID1, naa1, coverage1);
 	
-	for (ichain = 1; ichain <= nchain2; ichain++) {
-	  if (input.qtchange == OFF) {
-	    coverage2 = align_chain[input.isub_out - 1][ichain][jchain].cover_t;
-	  } else {
-	    coverage2 = align_chain[input.isub_out - 1][jchain][ichain].cover_q;
-	  }
-
-	  if (coverage2 > 0.0) {
-	    if (input.qtchange == OFF) {
-	      chainID2 = pdbdat_q.chainID_org[ichain];
-	    } else {
-	      chainID2 = pdbdat_t.chainID_org[ichain];
-	    }
-	    printf("P2:%1s %5.1f%% ", chainID2, coverage2);
-	  }
-	}
-	printf(")\n");
+	      for (ichain = 1; ichain <= nchain2; ichain++) {
+	        if (input.qtchange == OFF) {
+	          coverage2 = align_chain[input.isub_out - 1][ichain][jchain].cover_t;
+	        } else {
+	          coverage2 = align_chain[input.isub_out - 1][jchain][ichain].cover_q;
+	        }
+    	    if (coverage2 > 0.0) {
+	          if (input.qtchange == OFF) {
+	            chainID2 = pdbdat_q.chainID_org[ichain];
+	          } else {
+	            chainID2 = pdbdat_t.chainID_org[ichain];
+	          }
+	          printf("P2:%1s %5.1f%% ", chainID2, coverage2);
+	        }
+	      }
+	      printf(")\n");
       }
     }
   }
 
-  /****  filename  ****/
+  /***************************************/
+  /**    output translation matrix      **/
+  /***************************************/
+  if(input.qtchange == ON){
+    inverse_mat(align[input.isub_out-1].rot, align[input.isub_out-1].vec);
+  }
+  if(input.silent == OFF){
+    printmat(stdout, align, OFF);
+  }    
+
+  /***************************************/
+  /**      output result file name       **/
+  /***************************************/
   if(input.silent == OFF){
     if (strcmp(input.aliout, "OFF") != 0) {
       printf(" alignment file          = %s\n", input.aliout);
@@ -169,9 +180,6 @@ void output(int naa_q, int naa_t, int natom_q, int natom_t, RESDAT *resdat_q,
   /****************************************/
   /**    output superposition pdbfile    **/
   /****************************************/
-  if(input.qtchange == ON){
-    inverse_mat(align[input.isub_out-1].rot, align[input.isub_out-1].vec);
-  }
   if (strncmp(input.pdbout, "OFF", 3) != 0) {
     fp = fopen(input.pdbout, "w");
     printsup(fp, naa_q, naa_t, natom_q, natom_t, resdat_q, resdat_t, allatm_q,
@@ -184,7 +192,7 @@ void output(int naa_q, int naa_t, int natom_q, int natom_t, RESDAT *resdat_q,
   /****************************************/
   if (strncmp(input.matout, "OFF", 3) != 0) {
     fp = fopen(input.matout, "w");
-    printmat(fp, align);
+    printmat(fp, align, ON);
     fclose(fp);
   }
 
