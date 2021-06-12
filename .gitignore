@@ -8,3 +8,5 @@ dist
 build
 # pycache
 */__pycache__/*
+# debug
+debug

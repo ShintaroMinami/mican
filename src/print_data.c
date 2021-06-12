@@ -172,7 +172,7 @@ void printali(FILE *fp, int naa_q, int naa_t, RESDAT *resdat_q,
 }
 
 /**  function print translation matrix  **/
-void printmat(FILE *fp, ALIGN *align) {
+void printmat(FILE *fp, ALIGN *align, int header) {
   int i, j, isub_out;
 
   isub_out = input.isub_out - 1;
@@ -181,7 +181,7 @@ void printmat(FILE *fp, ALIGN *align) {
   for (i = 1; i <= 3; i++) {
     for (j = 1; j <= 3; j++) {
       if (fabs(align[isub_out].rot[i][j]) < EPS) {
-	align[isub_out].rot[i][j] = 0.0;
+	      align[isub_out].rot[i][j] = 0.0;
       }
     }
     if (fabs(align[isub_out].vec[i]) < EPS) {
@@ -190,12 +190,14 @@ void printmat(FILE *fp, ALIGN *align) {
   }
 
   /**  output  **/
-  if (input.qtchange == ON) {
-    fprintf(fp, " Alignment No. %02d  ( TM-score=%5.3f, SP-score=%5.3f )\n", input.isub_out,
-	    align[isub_out].TMscore_q, align[isub_out].SPscore);
-  } else {
-    fprintf(fp, " Alignment No. %02d  ( TM-score=%5.3f, SP-score=%5.3f )\n", input.isub_out,
-	    align[isub_out].TMscore_t, align[isub_out].SPscore);
+  if (header == ON){
+    if (input.qtchange == ON) {
+      fprintf(fp, " Alignment No. %02d  ( TM-score=%5.3f, SP-score=%5.3f )\n", input.isub_out,
+	      align[isub_out].TMscore_q, align[isub_out].SPscore);
+    } else {
+      fprintf(fp, " Alignment No. %02d  ( TM-score=%5.3f, SP-score=%5.3f )\n", input.isub_out,
+	      align[isub_out].TMscore_t, align[isub_out].SPscore);
+    }
   }
   fprintf(fp, " ----- Rotation matrix to rotate Chain1 to Chain2 -----\n");
   fprintf(fp, " i       t(i)           u(i,1)      u(i,2)      u(i,3)\n");

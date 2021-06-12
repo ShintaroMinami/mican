@@ -359,7 +359,7 @@ void printrascript(FILE *fp, int naa1, int naa2, RESDAT *resdat1,
 void printallatm(FILE *fp, int natom, ALLATM *allatm, int imodel);
 void printali(FILE *fp, int naa_q, int naa_t, RESDAT *resdat_q,
                  RESDAT *resdat_t, ALIGN *align);
-void printmat(FILE *fp, ALIGN *align);
+void printmat(FILE *fp, ALIGN *align, int header);
 void inverse_mat(float **rot, float *vec);
 
 /**  Utils  **/
