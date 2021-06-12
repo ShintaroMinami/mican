@@ -93,7 +93,7 @@ from pymican import mican
 m = mican()
 
 # calculate alignment
-outdict = m.align(pdb1=INPUT_PDBFILE_1, pdb2=IPUT_PDBFILE_2, options=EXTRAOPTIONS)
+outdict = m.align(pdb1='pdbfile1', pdb2='pdbfile2', options='extra-mican-options')
 ```
 
 Attributes
