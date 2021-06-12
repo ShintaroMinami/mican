@@ -15,8 +15,3 @@ $(OBJS): $(HEADERS)
 
 clean:
 	rm -f $(OBJS) $(TARGET) $(TARGETLIB)
-
-lib: $(OBJS)
-	$(CC) -shared -fPIC $(CFLAGS) -o $(TARGETLIB) $(OBJS) $(LIBS)
-	
-	
