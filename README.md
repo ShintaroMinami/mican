@@ -16,7 +16,7 @@ Web Site: http://www.tbp.cse.nagoya-u.ac.jp/MICAN
 2. Bioinformatics 2018, 34(19), S. Minami, K. Sawada, M Ota, and G. Chikenji
 
 ## License
-[MIT](https://choosealicense.com/licenses/MIT/)
+[MIT](https://choosealicense.com/licenses/mit/)
 # Easy instllation
 ```
 pip install pymican
