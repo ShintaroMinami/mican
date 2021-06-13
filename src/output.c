@@ -169,11 +169,18 @@ void output(int naa_q, int naa_t, int natom_q, int natom_t, RESDAT *resdat_q,
   }
 
   /***************************************/
+  /**     print alignment on STDOUT     **/
+  /***************************************/
+  if(input.printalign == ON && input.silent == OFF){
+    printali(stdout, naa_q, naa_t, resdat_q, resdat_t, align, ON);
+  }
+
+  /***************************************/
   /**       output alignment file       **/
   /***************************************/
   if (strncmp(input.aliout, "OFF", 3) != 0) {
     fp = fopen(input.aliout, "w");
-    printali(fp, naa_q, naa_t, resdat_q, resdat_t, align);
+    printali(fp, naa_q, naa_t, resdat_q, resdat_t, align, OFF);
     fclose(fp);
   }
 

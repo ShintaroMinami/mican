@@ -47,7 +47,9 @@ int main(int argc, char *argv[]) {
   input.qtchange = OFF;  //  exchange : query <-> template
   input.silent = OFF;    //  silent mode
   input.progress = OFF;  //  output progress
-
+  /****  invisible options  ****/
+  input.printalign = OFF;
+  
   /****************************/
   /*  GET OPTION & FILENAMES  */
   /****************************/

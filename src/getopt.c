@@ -154,6 +154,10 @@ PRIVATE void read_opt(int argc, char *argv[], int iarg, int ich) {
       argv[iarg + 1][0] = '\0';
     }
     break;
+  /****  invisible options  ****/
+  case 'z': /**  print alignment on STDOUT  **/
+    input.printalign = ON;
+    break;
   /****  for parameter tuning  ****/
   case '0': /**  Smin  **/
     if (check_argument(argc, argv, iarg, ich) == TRUE) {
