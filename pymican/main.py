@@ -142,7 +142,7 @@ class mican:
         self.binary = binary
         return
 
-    def align(self, pdb1: str, pdb2: str, options: Union[str, List[str]]=[], return_dict: int=False)->Union[mican_result, dict]:
+    def align(self, pdb1: str, pdb2: str, options: Union[str, List[str]]=[], return_dict: int=False)->Union[Alignment, dict]:
         """
         Alignment calculation
 
