@@ -5,7 +5,7 @@ import setuptools
 from setuptools.extension import Extension
 from setuptools.command.build_ext import build_ext
 
-VERSION = 'v1.6.0'
+VERSION = 'v1.7.0'
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
