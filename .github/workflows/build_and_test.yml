@@ -6,7 +6,7 @@ on:
       - master
       - working
   release:
-    types: [published]
+    types: [released]
   workflow_dispatch:
 
 jobs:
