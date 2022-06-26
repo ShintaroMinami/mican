@@ -13,5 +13,4 @@ jobs:
     steps:
       - name: execute echo command
         run: |
-          echo "do ls"
           ls
