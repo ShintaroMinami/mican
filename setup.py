@@ -36,7 +36,7 @@ setuptools.setup(
         'pandas'
     ],
     scripts=[
-        #'scripts/mican',
+        'scripts/mican',
     ],
 
 )
