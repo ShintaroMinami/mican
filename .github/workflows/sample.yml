@@ -12,7 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: test actions
-      - run: eco "test start"
       - uses: actions/checkout@v2
       - run: |
           ls -al
