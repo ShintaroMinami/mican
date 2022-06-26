@@ -26,7 +26,5 @@ jobs:
 
       - name: Build & install pymican
         run: |
-          pwd
-          ls
           python setup.py install
-          pip list | grep mican
+          python -m unittest discover
