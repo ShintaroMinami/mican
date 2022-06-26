@@ -22,8 +22,76 @@ Web Site: http://www.tbp.cse.nagoya-u.ac.jp/MICAN
 pip install pymican
 ```
 
+# Python module usage
+1. install pymican
+```
+pip install pymican
+```
+2. usage
+```python
+# import module
+from pymican import mican
+
+# create object
+m = mican()
+
+# calculate alignment
+aln = m.align(pdb1='pdbfile1', pdb2='pdbfile2', options='extra-mican-options')
+
+# get TM-score, RMSD, etc.
+print(aln.TMscore)
+print(aln.rmsd)
+```
+
+Attributes of Alignment object
+```
+    MICAN alignment class
+
+    Attributes
+    ----------
+    outdict : dict
+        Alignment info
+    mode : str
+        Alignment mode
+    pdb1, pdb2 : str
+        PDB file path
+    size1, size2 : int
+        Size of protein structure
+    nalign : int
+        Number of aligned residues
+    rmsd : float
+        RMSD of aligned residues
+    TMscore : float
+        TM-score
+    sTMscore : float
+        SSE weighted TM-score
+    seq_identity : float
+        Sequence identity as percentage [0,100]
+    DALIscore : float
+        DALI z-score
+    SPscore : float
+        SP-score
+    TMscore1, TMscore2 : float
+        TM-score normalized by each protein length
+    coverage1, coverage2 : float
+        Aligned coverage for each protein length
+    translation_rot : numpy.array(3,3)
+        Rotation matrix for superposition protein1 on protein2
+    translation_vec : numpy.array(3)
+        Translation vector for superposition protein1 on protein2
+    alignment : pandas.DataFrame
+        Residue-Residue alignment info
+    alignlst : List[pandas.item]
+        Alignment info for iterator methods
+
+    Methods
+    -------
+    translate_xyz(xyz: np.array(N,3)) -> np.array(N,3)
+        Rotate & translate xyz coordinates
+```
+
 # Compilation and usage
-1. To compile MICAN software: please type following command
+1. To compile MICAN software: please type this command
 ```
 % make
 ```
@@ -38,7 +106,7 @@ pip install pymican
 % mican test/test1.1.pdb test/test1.2.pdb -a align.aln -o sup.pdb
 ```
 
-For more details, please read following usage.
+For more details, please read the usage.
 
 ```
  USAGE: % mican protein1 protein2 [OPTION]
@@ -79,50 +147,3 @@ For more details, please read following usage.
    % rasmol -script sup.pdb
 ```
 
-# Usage as Python module
-1. install pymican
-```
-pip install pymican
-```
-2. usage
-```python
-# import module
-from pymican import mican
-
-# create object
-m = mican()
-
-# calculate alignment
-outdict = m.align(pdb1='pdbfile1', pdb2='pdbfile2', options='extra-mican-options')
-```
-
-Attributes
-```
-Paremeters
-  ----------
-  pdb1, pdb2 : str
-      Input PDB files
-  options : (str, [str,...]), default=[]
-      Extra potions for mican calculation.
-      For the option details please see (https://github.com/ShintaroMinami/mican).
-  Returns
-  -------
-  dict = {
-      'mode': ('sequential', 'rewirering', 'reverse'),
-      'pdb1': string,
-      'size1': int,
-      'pdb2': string,
-      'size2': int,
-      'nalign': int,
-      'rmsd': float,
-      'TMscore': float,
-      'sTMscore': float,
-      'seq-identity': float,
-      'DALIscore': float,
-      'SPscore': float,
-      'TMscore1': float, # TMscore normalized by size of protein1
-      'coverage1': float,
-      'TMscore2': float, # TMscore normalized by size of protein2
-      'coverage2': float
-  }
-```

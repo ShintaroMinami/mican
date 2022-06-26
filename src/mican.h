@@ -165,6 +165,8 @@ typedef struct {
   /****  output option  ****/
   int silent;
   int progress;
+  /****  invisible option  ****/
+  int printalign;
 } INPUT_DATA;
 
 INPUT_DATA input;
@@ -358,7 +360,7 @@ void printrascript(FILE *fp, int naa1, int naa2, RESDAT *resdat1,
                    RESDAT *resdat2, int *align1, int *align2);
 void printallatm(FILE *fp, int natom, ALLATM *allatm, int imodel);
 void printali(FILE *fp, int naa_q, int naa_t, RESDAT *resdat_q,
-                 RESDAT *resdat_t, ALIGN *align);
+                 RESDAT *resdat_t, ALIGN *align, int header);
 void printmat(FILE *fp, ALIGN *align, int header);
 void inverse_mat(float **rot, float *vec);
 

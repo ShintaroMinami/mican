@@ -100,7 +100,7 @@ void printsup(FILE *fp, int naa_q, int naa_t, int natom_q, int natom_t,
 
 /**  function print alignment  **/
 void printali(FILE *fp, int naa_q, int naa_t, RESDAT *resdat_q,
-                 RESDAT *resdat_t, ALIGN *align) {
+                 RESDAT *resdat_t, ALIGN *align, int header) {
   int iaa, jaa;
   int isub_out;
   
@@ -142,28 +142,30 @@ void printali(FILE *fp, int naa_q, int naa_t, RESDAT *resdat_q,
   /** Alignment **/
   if (input.qtchange == OFF) {
     for (iaa = 1; iaa <= naa_t; iaa++) {
+      if(header==ON){ fprintf(fp, "ALIGN"); }
       fprintf(fp, "  %4d %1c %1s ", resdat_t[iaa].iaa_org,
 	      resdat_t[iaa].reschar, resdat_t[iaa].chainID_org);
       jaa = align[isub_out].align_t[iaa];
       if (jaa == 0) {
-	fprintf(fp, "    . . .               .        .\n");
+	      fprintf(fp, "    . . .               .        .\n");
       } else {
-	fprintf(fp, " %4d %1c %1s           %5.2f    %5.2f\n", resdat_q[jaa].iaa_org,
-		resdat_q[jaa].reschar, resdat_q[jaa].chainID_org,
-		align[isub_out].local_mTM[jaa], align[isub_out].local_dist[jaa]);
+	      fprintf(fp, " %4d %1c %1s           %5.2f    %5.2f\n", resdat_q[jaa].iaa_org,
+		      resdat_q[jaa].reschar, resdat_q[jaa].chainID_org,
+		      align[isub_out].local_mTM[jaa], align[isub_out].local_dist[jaa]);
       }
     }
   } else {
     for (iaa = 1; iaa <= naa_q; iaa++) {
+      if(header==ON){ fprintf(fp, "ALIGN"); }
       fprintf(fp, "  %4d %1c %1s ", resdat_q[iaa].iaa_org,
 	      resdat_q[iaa].reschar, resdat_q[iaa].chainID_org);
       jaa = align[isub_out].align_q[iaa];
       if (jaa == 0) {
-	fprintf(fp, "    . . .               .        .\n");
+	      fprintf(fp, "    . . .               .        .\n");
       } else {
-	fprintf(fp, " %4d %1c %1s           %5.2f    %5.2f\n", resdat_t[jaa].iaa_org,
-		resdat_t[jaa].reschar, resdat_t[jaa].chainID_org,
-		align[isub_out].local_mTM[iaa], align[isub_out].local_dist[iaa]);
+	      fprintf(fp, " %4d %1c %1s           %5.2f    %5.2f\n", resdat_t[jaa].iaa_org,
+		      resdat_t[jaa].reschar, resdat_t[jaa].chainID_org,
+		      align[isub_out].local_mTM[iaa], align[isub_out].local_dist[iaa]);
       }
     }
   }
