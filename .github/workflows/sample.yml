@@ -11,6 +11,11 @@ jobs:
   print-hello-world:
     runs-on: ubuntu-latest
     steps:
-      - name: execute echo command
-        run: |
-          ls
+      - name: test actions
+      - run: eco "test start"
+      - uses: actions/checkout@v2
+      - run: |
+          ls -al
+          cd .github/workflows/
+          ls -al
+
