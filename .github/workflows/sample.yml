@@ -25,4 +25,4 @@ jobs:
           pip install -r requirements.txt
 
       - name: Build & install pymican
-        run: python setup.py build bdist_wheel
+        run: python setup.py bdist_wheel
