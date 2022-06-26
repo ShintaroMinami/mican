@@ -29,3 +29,4 @@ jobs:
           pwd
           ls
           python setup.py install
+          pip list | grep mican
