@@ -27,5 +27,5 @@ jobs:
       - name: Build & install pymican
         run: |
           pwd
-          ls scripts
+          ls
           python setup.py install
