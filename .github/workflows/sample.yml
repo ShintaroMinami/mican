@@ -26,4 +26,4 @@ jobs:
           pip install setuptools
 
       - name: Build & install pymican
-        run: python setup.py bdist_wheel
+        run: python setup.py install
