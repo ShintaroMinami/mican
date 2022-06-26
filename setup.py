@@ -31,6 +31,7 @@ setuptools.setup(
     ext_modules=[Extension('', [])],
     packages=setuptools.find_packages(),
     include_package_data=True,
+    setup_requires=['setuptools_scm'],
     install_requires=[
         'numpy',
         'pandas'
