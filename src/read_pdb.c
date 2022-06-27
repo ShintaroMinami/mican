@@ -364,6 +364,9 @@ PRIVATE void get_xyz(char *buffer, int naa, int *iaa, int *iatom,
   allatm[*iatom].coord[1] = x;
   allatm[*iatom].coord[2] = y;
   allatm[*iatom].coord[3] = z;
-
+  /** Occupancy **/
+  allatm[*iatom].occupancy = occupancy;
+  /** Temp Factor **/
+  allatm[*iatom].tempfactor = tempFactor;
   return;
 }

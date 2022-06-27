@@ -201,6 +201,8 @@ typedef struct {
   int iatom_org;
   int iaa_org;
   float coord[3 + 1];
+  float occupancy;
+  float tempfactor;
 } ALLATM;
 
 typedef struct {

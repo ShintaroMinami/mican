@@ -123,10 +123,11 @@ void printallatm(FILE *fp, int natom, ALLATM *allatm, int imodel) {
   iatom = 0;
   for (iatom = 1; iatom <= natom; iatom++) {
     fprintf(
-        fp, "%6s%5d %4s %3s %1s%4d    %8.3f%8.3f%8.3f\n", allatm[iatom].record,
+        fp, "%6s%5d %4s %3s %1s%4d    %8.3f%8.3f%8.3f  %4.2f%6.2f\n", allatm[iatom].record,
         allatm[iatom].iatom_org, allatm[iatom].atmname, allatm[iatom].resname,
         allatm[iatom].chainID_org, allatm[iatom].iaa_org,
-        allatm[iatom].coord[1], allatm[iatom].coord[2], allatm[iatom].coord[3]);
+        allatm[iatom].coord[1], allatm[iatom].coord[2], allatm[iatom].coord[3],
+        allatm[iatom].occupancy, allatm[iatom].tempfactor);
   }
   fprintf(fp, "ENDMDL\n");
 
