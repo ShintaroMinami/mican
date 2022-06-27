@@ -20,7 +20,7 @@ class compile_mican(build_ext):
 setuptools.setup(
     name="pymican",
     #use_scm_version={'local_scheme': 'no-local-version'},
-    version=VERSION
+    version=VERSION,
     author="Shintaro Minami",
     description="Non-sequential protein structure alignment algorithm",
     long_description=long_description,
