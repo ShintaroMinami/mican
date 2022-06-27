@@ -43,4 +43,4 @@ for t in tqdm.tqdm(targets):
 
 accuracy_mean = np.array(stack).mean()
 assert accuracy_mean >= 0.676, 'Low accuracy in [{}]'.format(dataset_name)
-print("accuracy_mean = {:.3} >= 0.676.".format(accuracy_mean))
+print("accuracy_mean = {:.3f} >= 0.676.".format(accuracy_mean))
