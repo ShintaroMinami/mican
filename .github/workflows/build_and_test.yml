@@ -30,4 +30,4 @@ jobs:
         run: python setup.py install
       
       - name: Test
-        run: python -m unittest discover
+        run: python tests/test_malisam.py
