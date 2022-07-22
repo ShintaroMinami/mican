@@ -84,7 +84,7 @@ void main_align(void) {
   }
 
   /**  naa effective (for Dali Zscore)  **/
-  input.naa_eff = sqrt(naa_q * naa_t);
+  input.naa_eff = sqrt((double)naa_q * (double)naa_t);
 
   /**  calloc RESDAT  **/
   resdat_q = (RESDAT *)calloc((size_t)(naa_q + 1), sizeof(RESDAT));
