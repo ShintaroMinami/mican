@@ -1,4 +1,5 @@
 #include "mican.h"
+#include "main.h"
 
 void output(int naa_q, int naa_t, int natom_q, int natom_t, RESDAT *resdat_q,
             RESDAT *resdat_t, ALLATM *allatm_q, ALLATM *allatm_t, ALIGN *align,

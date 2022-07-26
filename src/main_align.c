@@ -1,4 +1,5 @@
 #include "mican.h"
+#include "main.h"
 
 void copy_align(int naa_q, int naa_t, ALIGN *align1, ALIGN *align2);
 

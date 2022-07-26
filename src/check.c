@@ -1,4 +1,5 @@
 #include "mican.h"
+#include "main.h"
 
 /** function for comparison of hash results **/
 PRIVATE int compare(const void *a, const void *b);
