@@ -169,8 +169,6 @@ typedef struct {
   int printalign;
 } INPUT_DATA;
 
-INPUT_DATA input;
-
 typedef struct {
   int exist;
   float x;
@@ -281,7 +279,6 @@ typedef struct {
   float seqID;
 } ALIGN;
 
-clock_t time_init, time_end, time_tmp;
 
 /**********************/
 /**     FUNCTION      */
