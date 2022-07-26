@@ -1,4 +1,10 @@
 #include "mican.h"
+#include "main.h"
+
+/** Define global variables**/
+
+INPUT_DATA input;
+clock_t time_init, time_end, time_tmp;
 
 void usage(void);
 

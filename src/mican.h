@@ -1,3 +1,6 @@
+#ifndef INCLUDED_mican_h_
+#define INCLUDED_mican_h_
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -168,6 +171,7 @@ typedef struct {
   /****  invisible option  ****/
   int printalign;
 } INPUT_DATA;
+
 
 typedef struct {
   int exist;
@@ -370,3 +374,5 @@ int svd(int m, int n, int withu, int withv, double eps, double tol, double *a,
         double *q, double *u, double *v, double *vt);
 float angle(float *a1, float *a2, float *a3, float *b1, float *b2, float *b3);
 float distance_2(float *a, float *b);
+
+#endif
