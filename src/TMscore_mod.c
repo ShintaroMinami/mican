@@ -1,4 +1,5 @@
 #include "mican.h"
+#include "main.h"
 
 float TMscore_mod(int naa0, int naa1, int naa2, RESDAT *resdat1, RESDAT *resdat2, ALIGN align,
                   int angle_switch, int local_switch) {

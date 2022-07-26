@@ -1,4 +1,5 @@
 #include "mican.h"
+#include "main.h"
 
 /**  function print INPUT protein data  **/
 void printinp(int naa_q, int naa_t, PDBDAT pdbdat_q, PDBDAT pdbdat_t) {

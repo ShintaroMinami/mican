@@ -1,4 +1,5 @@
 #include "mican.h"
+#include "main.h"
 
 #define USED -1000.0
 #define ALIGNED -2000.0
