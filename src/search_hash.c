@@ -1,4 +1,5 @@
 #include "mican.h"
+#include "main.h"
 
 PRIVATE void search(int *ialign, int nsse_q, int nsse_t, int nhash,
                     HASH_TABLE ***hash, SSEDAT *ssedat, HASH_RESULT *hres,

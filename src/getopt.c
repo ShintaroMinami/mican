@@ -1,4 +1,5 @@
 #include "mican.h"
+#include "main.h"
 
 PRIVATE void read_opt(int argc, char *argv[], int iarg, int ich);
 PRIVATE int check_argument(int argc, char *argv[], int iarg, int ich);

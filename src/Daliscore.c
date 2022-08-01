@@ -1,5 +1,5 @@
 #include "mican.h"
-
+#include "main.h"
 
 float Daliscore(int naa1, float **distmat1, float **distmat2, ALIGN *align) {
 

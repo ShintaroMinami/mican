@@ -1,4 +1,5 @@
 #include "mican.h"
+#include "main.h"
 
 float TMscore(int naa0, int naa1, RESDAT *resdat1, RESDAT *resdat2, ALIGN align) {
   int iaa, jaa;

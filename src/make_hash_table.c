@@ -1,4 +1,5 @@
 #include "mican.h"
+#include "main.h"
 
 /*************************************/
 /**     FUNCTION  pre_make_hash     **/

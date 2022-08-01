@@ -1,4 +1,5 @@
 #include "mican.h"
+#include "main.h"
 
 int ca_alignment(int naa_q, int naa_t, RESDAT *resdat_q, RESDAT *resdat_t,
                  ALIGN align, float ***mat, float **score, float **score_r) {

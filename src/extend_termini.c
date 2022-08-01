@@ -1,4 +1,5 @@
 #include "mican.h"
+#include "main.h"
 
 typedef struct {
   int iaa;
