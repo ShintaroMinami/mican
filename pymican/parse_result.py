@@ -4,8 +4,8 @@ import pandas as pd
 
 def output2dict(mican_output:str):
     dict = {}
-    rot = np.zeros((3,3), dtype=np.float)
-    vec = np.zeros((3), dtype=np.float)
+    rot = np.zeros((3,3), dtype=float)
+    vec = np.zeros((3), dtype=float)
     align = []
     for l in mican_output.split('\n'):
         if l.startswith(' TM-score=') & l.endswith('Protein1)'):

@@ -112,7 +112,7 @@ class Alignment:
             Translated xyz coordinates
         """
         # list to np.array
-        xyz = np.array(xyz, dtype=np.float) if type(xyz) == list else xyz
+        xyz = np.array(xyz, dtype=float) if type(xyz) == list else xyz
         # save original shape
         original_shape = xyz.shape
         # add dimention 1 if ndim==1
