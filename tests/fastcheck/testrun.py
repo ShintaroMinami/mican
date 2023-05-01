@@ -17,7 +17,6 @@ pdbline1 = "".join(open('test1.1.pdb', 'r').readlines())
 pdbline2 = "".join(open('test1.2.pdb', 'r').readlines())
 aln = mican.align(pdbline1, pdbline2)
 
-
 # print summary
 print(aln)
 

@@ -6,14 +6,19 @@ import numpy as np
 import pandas as pd
 from .parse_result import output2dict
 
+if sys.platform == "linux":
+    try:
+        from memory_tempfile import MemoryTempfile
+        tempfile = MemoryTempfile()
+    except ImportError:
+        import tempfile
+else:
+    import tempfile
+
 
 dir_script = os.path.dirname(os.path.realpath(__file__))
 BINFILEPATH = os.path.abspath(dir_script+'/bin/mican')
 
-#from memory_tempfile import MemoryTempfile
-#tempfile = MemoryTempfile()
-
-import tempfile
 
 class Alignment:
     """
@@ -196,6 +201,7 @@ class mican:
             ntf1 = tempfile.NamedTemporaryFile(mode='w')
             ntf1.write(pdb1)
             pdb1 = ntf1.name
+            print(ntf1.name)
         if not os.path.isfile(pdb2):
             ntf2 = tempfile.NamedTemporaryFile(mode='w')
             ntf2.write(pdb2)
