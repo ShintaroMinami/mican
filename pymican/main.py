@@ -1,4 +1,5 @@
 import os
+import sys
 import subprocess
 from typing import List, Union
 import numpy as np
@@ -9,6 +10,10 @@ from .parse_result import output2dict
 dir_script = os.path.dirname(os.path.realpath(__file__))
 BINFILEPATH = os.path.abspath(dir_script+'/bin/mican')
 
+#from memory_tempfile import MemoryTempfile
+#tempfile = MemoryTempfile()
+
+import tempfile
 
 class Alignment:
     """
@@ -185,7 +190,18 @@ class mican:
         """
         # arguments
         options = options if type(options) == str else ' '.join(options)
+        # pdb files
+        ntf1, ntf2 = None, None
+        if not os.path.isfile(pdb1):
+            ntf1 = tempfile.NamedTemporaryFile(mode='w')
+            ntf1.write(pdb1)
+            pdb1 = ntf1.name
+        if not os.path.isfile(pdb2):
+            ntf2 = tempfile.NamedTemporaryFile(mode='w')
+            ntf2.write(pdb2)
+            pdb2 = ntf2.name
         args = [pdb1, pdb2] + options.split()
+
         # mican calc
         process = subprocess.Popen([self.binary,'-z']+args,
                                 stdout=subprocess.PIPE,
@@ -193,6 +209,10 @@ class mican:
         # output
         output, _ = process.communicate()
         outdict = output2dict(output.decode('utf-8'))
+
+        # close tempfile
+        if ntf1 is not None: ntf1.close()
+        if ntf2 is not None: ntf2.close()
         # return
         return outdict if return_dict else Alignment(outdict)
 

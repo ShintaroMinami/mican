@@ -3,6 +3,7 @@
 # pypi
 dist
 *.egg-info
+*.eggs
 build
 # pycache
 */__pycache__/*
