@@ -3,7 +3,7 @@
 /************************************************/
 /**     FUNCTION  assignment sse               **/
 /************************************************/
-int assign_sse(int naa, SSEDAT *ssedat, RESDAT *resdat) {
+int assign_sse(int naa, SSEDAT *ssedat, RESDAT *resdat, int coil_as_strand) {
   int i, j;
   int iaa, jaa;
   int icoord;
@@ -17,6 +17,8 @@ int assign_sse(int naa, SSEDAT *ssedat, RESDAT *resdat) {
   int init, end;
   int dl;
   int *sse_iaa;
+  int sse_coil, sse_helix, sse_strand;
+  char sse_coil_char, sse_helix_char, sse_strand_char;
   float d;
   float param_H1[4 + 1], param_H2;
   float param_E1[4 + 1], param_E2;
@@ -47,14 +49,28 @@ int assign_sse(int naa, SSEDAT *ssedat, RESDAT *resdat) {
   param_E1[4] = 13.00f;
   param_E2    = 1.60f; // original=1.42 ( Zhang.et.al )
 
+  /** let all coils be strand in the case there is too few SSSs **/
+  if (coil_as_strand == TRUE) {
+    sse_coil = SSE_STRAND;
+    sse_coil_char = 'C';
+  }
+  /** default vehavior **/
+  else{
+    sse_coil = SSE_COIL;
+    sse_coil_char = 'C';
+  }
+  sse_helix = SSE_HELIX_;
+  sse_helix_char = 'H';
+  sse_strand = SSE_STRAND;
+  sse_strand_char = 'E';
   /***************************************/
   /**       initial calcuration         **/
   /***************************************/
   /**  initialize  **/
   for (iaa = 1; iaa <= naa; iaa++) {
-    resdat[iaa].ssechar = 'C';
-    resdat[iaa].ssetype = SSE_COIL;
-    sse_iaa[iaa] = SSE_COIL;
+    resdat[iaa].ssechar = sse_coil_char;
+    resdat[iaa].ssetype = sse_coil;
+    sse_iaa[iaa] = sse_coil;
   }
 
   /**  calc distance  **/
@@ -97,27 +113,27 @@ int assign_sse(int naa, SSEDAT *ssedat, RESDAT *resdat) {
 
     if (sw_H == ON) {
       /****  assign HELIX  ****/
-      sse_iaa[iaa - 1] = SSE_HELIX_;
-      sse_iaa[iaa] = SSE_HELIX_;
-      sse_iaa[iaa + 1] = SSE_HELIX_;
-      resdat[iaa - 1].ssetype = SSE_HELIX_;
-      resdat[iaa].ssetype = SSE_HELIX_;
-      resdat[iaa + 1].ssetype = SSE_HELIX_;
-      resdat[iaa - 1].ssechar = 'H';
-      resdat[iaa].ssechar = 'H';
-      resdat[iaa + 1].ssechar = 'H';
+      sse_iaa[iaa - 1] = sse_helix;
+      sse_iaa[iaa] = sse_helix;
+      sse_iaa[iaa + 1] = sse_helix;
+      resdat[iaa - 1].ssetype = sse_helix;
+      resdat[iaa].ssetype = sse_helix;
+      resdat[iaa + 1].ssetype = sse_helix;
+      resdat[iaa - 1].ssechar = sse_helix_char;
+      resdat[iaa].ssechar = sse_helix_char;
+      resdat[iaa + 1].ssechar = sse_helix_char;
     }
     if (sw_E == ON) {
       /****  assign STRAND  ****/
-      sse_iaa[iaa - 1] = SSE_STRAND;
-      sse_iaa[iaa] = SSE_STRAND;
-      sse_iaa[iaa + 1] = SSE_STRAND;
-      resdat[iaa - 1].ssetype = SSE_STRAND;
-      resdat[iaa].ssetype = SSE_STRAND;
-      resdat[iaa + 1].ssetype = SSE_STRAND;
-      resdat[iaa - 1].ssechar = 'E';
-      resdat[iaa].ssechar = 'E';
-      resdat[iaa + 1].ssechar = 'E';
+      sse_iaa[iaa - 1] = sse_strand;
+      sse_iaa[iaa] = sse_strand;
+      sse_iaa[iaa + 1] = sse_strand;
+      resdat[iaa - 1].ssetype = sse_strand;
+      resdat[iaa].ssetype = sse_strand;
+      resdat[iaa + 1].ssetype = sse_strand;
+      resdat[iaa - 1].ssechar = sse_strand_char;
+      resdat[iaa].ssechar = sse_strand_char;
+      resdat[iaa + 1].ssechar = sse_strand_char;
     }
   }
 
@@ -128,7 +144,7 @@ int assign_sse(int naa, SSEDAT *ssedat, RESDAT *resdat) {
   isse = 0;
   SSEsw = OFF;
   for (iaa = 1; iaa <= naa; iaa++) {
-    if (sse_iaa[iaa] == SSE_STRAND || sse_iaa[iaa] == SSE_HELIX_) {
+    if (sse_iaa[iaa] == sse_strand || sse_iaa[iaa] == sse_helix) {
       if (SSEsw == OFF) {
         isse++;
         iaa_ini[isse] = iaa;
@@ -150,7 +166,7 @@ int assign_sse(int naa, SSEDAT *ssedat, RESDAT *resdat) {
     }
   }
   /*  for last aa  */
-  if (sse_iaa[naa] == SSE_STRAND || sse_iaa[naa] == SSE_HELIX_) {
+  if (sse_iaa[naa] == sse_strand || sse_iaa[naa] == sse_helix) {
     iaa_end[isse] = naa;
   }
   nsse = isse;
@@ -161,10 +177,10 @@ int assign_sse(int naa, SSEDAT *ssedat, RESDAT *resdat) {
     init = iaa_ini[isse];
     end = iaa_end[isse];
     len_seg = 0;
-    if (sse_iaa[init] == SSE_STRAND) {
+    if (sse_iaa[init] == sse_strand) {
       len_seg = seg_STRAND;
     }
-    if (sse_iaa[init] == SSE_HELIX_) {
+    if (sse_iaa[init] == sse_helix) {
       len_seg = seg_HELIX_;
     }
     dl = end - init - len_seg + 2;
@@ -173,12 +189,12 @@ int assign_sse(int naa, SSEDAT *ssedat, RESDAT *resdat) {
       for (i = 1; i <= dl; i++) {
         isse_ok++;
         ssedat[isse_ok].ssetype = sse_iaa[init];
-        if (ssedat[isse_ok].ssetype == SSE_HELIX_) {
-          ssedat[isse_ok].ssechar = 'H';
-        } else if (ssedat[isse_ok].ssetype == SSE_STRAND) {
-          ssedat[isse_ok].ssechar = 'E';
+        if (ssedat[isse_ok].ssetype == sse_strand) {
+          ssedat[isse_ok].ssechar = sse_helix_char;
+        } else if (ssedat[isse_ok].ssetype == sse_helix) {
+          ssedat[isse_ok].ssechar = sse_strand_char;
         } else {
-          ssedat[isse_ok].ssetype = SSE_COIL;
+          ssedat[isse_ok].ssetype = sse_coil;
         }
         ssedat[isse_ok].naa = len_seg;
         for (j = 1; j <= len_seg; j++) {

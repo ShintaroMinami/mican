@@ -149,17 +149,19 @@ void main_align(void) {
   ssedat_t = (SSEDAT *)calloc((size_t)(naa_max + 1), sizeof(SSEDAT));
 
   /**  assign sse  **/
-  nsse_q = assign_sse(naa_q, ssedat_q, resdat_q);
-  nsse_t = assign_sse(naa_t, ssedat_t, resdat_t);
+  nsse_q = assign_sse(naa_q, ssedat_q, resdat_q, FALSE);
+  nsse_t = assign_sse(naa_t, ssedat_t, resdat_t, FALSE);
 
   if (nsse_q < 2 || nsse_t < 2) {
     if (nsse_q < 2) {
-      fprintf(stderr, "!! Error   : nsse < 2 in %s\n", input.file_q);
+      fprintf(stderr, "! Worning   : nsse < 2 in %s\n", input.file_q);
     }
     if (nsse_t < 2) {
-      fprintf(stderr, "!! Error   : nsse < 2 in %s\n", input.file_t);
+      fprintf(stderr, "! Worning   : nsse < 2 in %s\n", input.file_t);
     }
-    return;
+    fprintf(stderr, "! Worning   : Every COIL will be considered as STRAND\n");
+    nsse_q = assign_sse(naa_q, ssedat_q, resdat_q, TRUE);
+    nsse_t = assign_sse(naa_t, ssedat_t, resdat_t, TRUE);
   }
 
   /*******************************/
