@@ -306,7 +306,7 @@ int count_chain(int naa, RESDAT *resdat);
 void chain_break_check(int naa, RESDAT *resdat);
 
 /**  SSE definition  **/
-int assign_sse(int naa, SSEDAT *ssedat, RESDAT *resdat);
+int assign_sse(int naa, SSEDAT *ssedat, RESDAT *resdat, int coil_as_strand);
 void xyz2vec(int nsse, SSEDAT *ssedat, RESDAT *resdat);
 void coord_definition(float *x, float *y, float *z, SSEDAT *ssedat, int isse);
 void coord_definition_r(float *x, float *y, float *z, SSEDAT *ssedat, int isse);
