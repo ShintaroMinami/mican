@@ -201,7 +201,6 @@ class mican:
             ntf1 = tempfile.NamedTemporaryFile(mode='w')
             ntf1.write(pdb1)
             pdb1 = ntf1.name
-            print(ntf1.name)
         if not os.path.isfile(pdb2):
             ntf2 = tempfile.NamedTemporaryFile(mode='w')
             ntf2.write(pdb2)
