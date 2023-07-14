@@ -200,10 +200,12 @@ class mican:
         if not os.path.isfile(pdb1):
             ntf1 = tempfile.NamedTemporaryFile(mode='w')
             ntf1.write(pdb1)
+            ntf1.flush()
             pdb1 = ntf1.name
         if not os.path.isfile(pdb2):
             ntf2 = tempfile.NamedTemporaryFile(mode='w')
             ntf2.write(pdb2)
+            ntf2.flush()
             pdb2 = ntf2.name
         args = [pdb1, pdb2] + options.split()
 
