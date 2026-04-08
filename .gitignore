@@ -9,3 +9,5 @@ build
 */__pycache__/*
 # debug
 debug
+# claude-code settings
+CLAUDE.md
