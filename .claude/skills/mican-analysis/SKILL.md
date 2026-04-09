@@ -138,6 +138,13 @@ Before any further analysis, separate the solutions:
 - Rotation angle **< 20°** — nearly identity transformation; MICAN found spatially nearby regions, not a symmetry operation
 - Correspondence **within the same unit** (u0→u0)
 
+**Pseudo higher-order candidates** (examine *after* confirming true Cn):
+- Same rotation axis as true Cn ranks (within ~1°)
+- t∥ ≈ 0 (pure rotation, no screw component)
+- DALI Z > 2
+- Angle close to k × (360°/2n) within **~10°**, but NOT matching true Cn within ~2°
+- Example: C4 confirmed → ranks showing angles **halfway between** the 90° Cn steps (near odd multiples of 360°/2n = 45°) → pseudo C8 candidates
+
 To get rotation angle for each rank, use `-z -i RANK` and parse rotation matrix lines starting with ` 1   `, ` 2   `, ` 3   `. Then: `cos θ = (trace(R) − 1) / 2`.
 
 ### Step 3: Rotation matrix analysis — identify Cn symmetry
@@ -146,7 +153,12 @@ For each true-symmetry rank:
 1. **Shared axis?** If all ranks have rotation axes within ~1° of each other → single true symmetry axis exists.
 2. **Cn match?** Check if rotation angles equal `k/n × 360°` (within ~1°) for some integer n.
 3. **Pure rotation or screw?** Compute `t∥ = t · axis`. If ≈ 0 → pure Cn rotation. If ≠ 0 → screw symmetry.
-4. **Pseudo higher-order symmetry?** If some ranks show angles that are close to (but not matching within ~1°) a higher-order Cn, note this as possible pseudo Cn character. Do not assert a specific fold class (e.g., β-propeller) from rotation angles alone — that requires additional evidence beyond MICAN's structural comparison.
+4. **Pseudo higher-order symmetry?** After confirming true Cn, check remaining significant ranks (same axis ±1°, DALI Z > 2, t∥ ≈ 0) whose angles do NOT match any Cn multiple. Test whether those angles match k × (360°/2n) within **~10°**:
+   - If yes → **pseudo C(2n)** character. **Always state both** in the conclusion: *"True symmetry: Cn. Visually pseudo C(2n) — repeat units are structurally similar but not strictly equivalent (Δ~X° from exact C(2n) angles)."*
+   - If no → note the unexplained rank(s) and consider domain effects.
+   - Example: C4 true → additional ranks near halfway-between angles (odd multiples of 360°/2n, within ~10°) → pseudo C8.
+   - Use detection code from `references/symmetry-analysis.md` §2.
+   - Do not assert fold class (e.g., β-propeller) from angles alone.
 
 Use code from `references/symmetry-analysis.md` §2.
 

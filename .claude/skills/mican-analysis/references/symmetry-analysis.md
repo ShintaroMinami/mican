@@ -126,6 +126,38 @@ for n in [2, 3, 4, 6, 7, 8]:
     matches = sum(1 for r in results.values()
                   if min(abs(r['theta_deg'] - base*k) for k in range(1, n)) < 2.0)
     print(f"  C{n}: {matches}/{len(results)} angles match (base={base:.1f}°)")
+
+# Detect pseudo higher-order symmetry (e.g. pseudo C(2n) when true symmetry is Cn)
+# Set TRUE_N to the confirmed symmetry order before running this block.
+TRUE_N = 4  # <-- set to confirmed Cn order
+PSEUDO_N = TRUE_N * 2
+pseudo_base = 360 / PSEUDO_N
+PSEUDO_THRESHOLD = 10.0  # degrees — loose threshold for pseudo-symmetry match
+
+true_multiples = {360 / TRUE_N * k for k in range(1, TRUE_N)}
+ref_axis = results[min(results)]['axis']  # reference axis from lowest-rank true-Cn result
+pseudo_candidates = []
+
+for rank, r in results.items():
+    axis_diff = np.degrees(np.arccos(np.clip(abs(np.dot(r['axis'], ref_axis)), 0, 1)))
+    if axis_diff > 1.0 or abs(r['t_par']) > 1.0:
+        continue  # different axis or screw component — skip
+    if any(abs(r['theta_deg'] - m) < 2.0 for m in true_multiples):
+        continue  # already accounted for by true Cn
+    dist = min(abs(r['theta_deg'] - pseudo_base * k) for k in range(1, PSEUDO_N))
+    if dist < PSEUDO_THRESHOLD:
+        pseudo_candidates.append((rank, r['theta_deg'], dist))
+
+if pseudo_candidates:
+    print(f"\n→ Pseudo C{PSEUDO_N} character detected (Δ < {PSEUDO_THRESHOLD}°):")
+    for rank, angle, diff in pseudo_candidates:
+        print(f"  Rank {rank}: {angle:.1f}°  (Δ{diff:.1f}° from exact C{PSEUDO_N} angle)")
+    print(f"  Conclusion: True C{TRUE_N} symmetry.")
+    print(f"  Visually pseudo C{PSEUDO_N} — repeat units are structurally similar but not")
+    avg_dev = sum(d for _, _, d in pseudo_candidates) / len(pseudo_candidates)
+    print(f"  strictly equivalent (average angle deviation ~{avg_dev:.1f}° from exact).")
+else:
+    print(f"\n→ No pseudo C{PSEUDO_N} character detected.")
 ```
 
 ---
