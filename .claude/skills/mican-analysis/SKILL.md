@@ -27,6 +27,22 @@ workflows needed to execute each type of analysis correctly.
 
 ## Setup
 
+### First-time setup
+
+If `pymican` is not yet installed, run the bundled setup script first:
+
+```bash
+python .claude/skills/mican-analysis/scripts/setup_env.py
+```
+
+This checks for `pymican`, installs it via `pip install pymican` if missing,
+and verifies the MICAN binary. A C compiler (gcc) is required to build the binary.
+If the script reports a missing compiler, install gcc before proceeding:
+- macOS: `xcode-select --install` or `brew install gcc`
+- Ubuntu: `sudo apt install gcc`
+
+### Usage
+
 `mican` is a class. Always instantiate it first:
 
 ```python

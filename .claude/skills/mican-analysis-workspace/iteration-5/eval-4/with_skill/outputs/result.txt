@@ -1,7 +1,0 @@
-TMscore  (shorter-normalized): 0.4940
-TMscore1 (pdb1-normalized):    0.4940  coverage: 75.0%
-TMscore2 (pdb2-normalized):    0.2210  coverage: 33.6%
-TM mean  (symmetric):          0.3575
-RMSD: 3.02 Å  |  Aligned: 48/64  |  size1=64 size2=143
-
-⚠ Size ratio is 2.2x — interpret TMscore with caution. TMscore1=0.494 vs TMscore2=0.221.

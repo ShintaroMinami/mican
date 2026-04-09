@@ -3,7 +3,7 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Compare tests/dataset/MALISAM-ns/pdb/d1a05a_d1dgsa3.1.pdb and tests/dataset/MALISAM-ns/pdb/d1a05a_d1dgsa3.2.pdb. Working directory: /Users/sminami/github/mican",
+      "prompt": "Compare tests/dataset/MALISAM-ns/pdb/d1a05a_d1dgsa3.1.pdb and tests/dataset/MALISAM-ns/pdb/d1a05a_d1dgsa3.2.pdb.",
       "expected_output": "Announces RW mode default, then shows all TM-score variants (TMscore/TMscore1/TMscore2/TM-mean), coverage values as percentages, size-difference warning if applicable, and a TM-score interpretation label.",
       "assertions": [
         "Output contains an announcement that general-purpose (RW) mode is being used",
@@ -16,7 +16,7 @@
     },
     {
       "id": 2,
-      "prompt": "Compare tests/dataset/MALISAM-ns/pdb/d1a2za_d1ghha_.1.pdb and tests/dataset/MALISAM-ns/pdb/d1a2za_d1ghha_.2.pdb using general-purpose alignment. Show which residues in pdb2 correspond to residues 10, 20, and 30 of pdb1. Save the results as a CSV file. Working directory: /Users/sminami/github/mican",
+      "prompt": "Compare tests/dataset/MALISAM-ns/pdb/d1a2za_d1ghha_.1.pdb and tests/dataset/MALISAM-ns/pdb/d1a2za_d1ghha_.2.pdb using general-purpose alignment. Show which residues in pdb2 correspond to residues 10, 20, and 30 of pdb1. Save the results as a CSV file.",
       "expected_output": "Residue correspondence table with a 'note' column. Pairs with Cα distance > 4.5 Å are flagged with ⚠. A summary warning is printed. A CSV file is saved.",
       "assertions": [
         "Corresponding pdb2 residues for pdb1 residues 10, 20, and 30 are shown",
@@ -30,7 +30,7 @@
     },
     {
       "id": 3,
-      "prompt": "Compare all pairs starting with d1a05a_ (matching .1.pdb and .2.pdb) under tests/dataset/MALISAM-ns/pdb/ using general-purpose alignment. Output a table sorted by TM-score in descending order. Working directory: /Users/sminami/github/mican",
+      "prompt": "Compare all pairs starting with d1a05a_ (matching .1.pdb and .2.pdb) under tests/dataset/MALISAM-ns/pdb/ using general-purpose alignment. Output a table sorted by TM-score in descending order.",
       "expected_output": "Results for 3 pairs sorted by TMscore descending. Each row includes TMscore, TMscore1, TMscore2, TM mean, rmsd, size1, size2. The pair with size ratio >= 1.5 is flagged.",
       "assertions": [
         "Results for all 3 pairs are shown",
@@ -42,7 +42,7 @@
     },
     {
       "id": 4,
-      "prompt": "Compare tests/dataset/MALISAM-ns/pdb/d1a05a_d1j71a_.1.pdb and tests/dataset/MALISAM-ns/pdb/d1a05a_d1j71a_.2.pdb using general-purpose alignment. Working directory: /Users/sminami/github/mican",
+      "prompt": "Compare tests/dataset/MALISAM-ns/pdb/d1a05a_d1j71a_.1.pdb and tests/dataset/MALISAM-ns/pdb/d1a05a_d1j71a_.2.pdb using general-purpose alignment.",
       "expected_output": "All TM-score variants are shown. A size-difference warning is triggered because the two structures differ by more than 1.5x in length. TMscore1 and TMscore2 differ noticeably.",
       "assertions": [
         "A size-difference warning is shown",
@@ -53,7 +53,7 @@
     },
     {
       "id": 5,
-      "prompt": "Analyze the internal structural symmetry of tests/dataset/skill_test/1cll.pdb and tests/dataset/skill_test/6wvs.pdb by comparing each protein against itself. Use -g 1000 and retrieve at least 5 solutions. For each protein, report whether statistically significant internal symmetry is detected (DALI Z-score > 2 in Rank 2+), and describe which regions correspond to each other. Working directory: /Users/sminami/github/mican",
+      "prompt": "Analyze the internal structural symmetry of tests/dataset/skill_test/1cll.pdb and tests/dataset/skill_test/6wvs.pdb by comparing each protein against itself. Use -g 1000 and retrieve at least 5 solutions. For each protein, report whether statistically significant internal symmetry is detected (DALI Z-score > 2 in Rank 2+), and describe which regions correspond to each other.",
       "expected_output": "Self-comparison for both 1cll and 6wvs. Rank 1 shows perfect self-match (TMscore=1.000, RMSD=0.00). Rank 2+ reveals internal domain symmetry for both proteins. 6wvs shows much stronger symmetry (DALI Z ~20, RMSD ~0.6 Å) than 1cll (DALI Z ~6.9). The corresponding regions are identified for each protein.",
       "assertions": [
         "Self-comparison is performed for both 1cll and 6wvs",
@@ -69,7 +69,7 @@
     },
     {
       "id": 6,
-      "prompt": "Analyze the rotational symmetry of tests/dataset/skill_test/6wvs.pdb using rotation matrix analysis and cyclic permutation detection. Use RW mode with -g 1000 and -n 20. (1) Extract rotation angle and rotation axis for Rank 2-8; (2) verify that multiple ranks share the same rotation axis; (3) estimate the repeat unit size from alignment shifts; (4) check whether the unit-level correspondence forms a cyclic permutation across ranks; (5) identify and filter out false-positive solutions (small rotation angle, same-unit correspondence). Conclude what rotational symmetry the protein has. Working directory: /Users/sminami/github/mican",
+      "prompt": "Analyze the rotational symmetry of tests/dataset/skill_test/6wvs.pdb using rotation matrix analysis and cyclic permutation detection. Use RW mode with -g 1000 and -n 20. (1) Extract rotation angle and rotation axis for Rank 2-8; (2) verify that multiple ranks share the same rotation axis; (3) estimate the repeat unit size from alignment shifts; (4) check whether the unit-level correspondence forms a cyclic permutation across ranks; (5) identify and filter out false-positive solutions (small rotation angle, same-unit correspondence). Conclude what rotational symmetry the protein has.",
       "expected_output": "Rotation angles for Rank 2-8 are extracted (180°, 90°, 90°, ~141°, ~141°, ~38°, ~38°). All ranks share the same rotation axis within ~1°. Repeat unit size is estimated as 46 residues. Rank 2-8 all show cyclic permutation of 4 units, confirming C4 symmetry. Rank 9+ are identified as false positives (rotation angle < 20°, same-unit correspondence). Conclusion: C4 rotational symmetry (pseudo C8 considering sub-unit internal repeats).",
       "assertions": [
         "Rotation angles are extracted for Rank 2-8 from the rotation matrices",

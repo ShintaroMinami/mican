@@ -1,9 +1,0 @@
-Comparing structures:
-  Structure 1: /Users/sminami/github/mican/tests/dataset/MALISAM-ns/pdb/d1a05a_d1dgsa3.1.pdb
-  Structure 2: /Users/sminami/github/mican/tests/dataset/MALISAM-ns/pdb/d1a05a_d1dgsa3.2.pdb
-
-Alignment Results:
-  TM-score:           0.3570
-  RMSD:               3.8450 Å
-  Aligned residues:   50
-  Sequence identity:  2.00%

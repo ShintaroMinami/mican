@@ -11,3 +11,16 @@ build
 debug
 # claude-code settings
 CLAUDE.md
+.claude/settings.local.json
+
+# skill eval workspace (contains local absolute paths from test runs)
+.claude/skills/mican-analysis-workspace/
+
+# packaged skill files and temporary analysis outputs
+*.skill
+*.pptx
+*_alignment.png
+*_mobility.png
+*_symmetry_map.png
+*_superposed.pdb
+*.aln

@@ -1,9 +1,0 @@
-Comparing: d1a05a_d1dgsa3.1.pdb vs d1a05a_d1dgsa3.2.pdb
-Comparing: d1a05a_d1j71a_.1.pdb vs d1a05a_d1j71a_.2.pdb
-Comparing: d1a05a_d1rblm_.1.pdb vs d1a05a_d1rblm_.2.pdb
-
-=== RESULTS (sorted by TMscore) ===
-                pdb1                 pdb2  TMscore  rmsd  nalign  seq_identity
-d1a05a_d1dgsa3.1.pdb d1a05a_d1dgsa3.2.pdb    0.502 3.975      74           1.4
-d1a05a_d1j71a_.1.pdb d1a05a_d1j71a_.2.pdb    0.494 3.019      48           4.2
-d1a05a_d1rblm_.1.pdb d1a05a_d1rblm_.2.pdb    0.466 3.283      62           9.7
