@@ -1,6 +1,6 @@
 {
   "name": "mican",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MICAN protein structure alignment — skills for structural comparison, symmetry analysis, residue correspondence, conformational change analysis, and domain detection.",
   "author": {
     "name": "ShintaroMinami"
