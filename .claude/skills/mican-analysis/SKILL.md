@@ -173,10 +173,17 @@ Use code from `references/symmetry-analysis.md` §4.
 
 ## Workflow D: Conformational Change (Apo/Holo)
 
-**Step 1** — Align on a tight core using `-q` threshold:
+**Step 0 — Check for internal symmetry first.**
+If the protein has tandem repeats or Cn symmetry (check with Workflow C), do NOT
+analyze the whole chain at once. Instead: identify repeat units → extract each unit
+from both states → run Steps 1–2 on each unit independently.
+See `references/conformational-analysis.md` — Workflow for repeat proteins.
+
+**Step 1** — Align on a conserved core using `-q` threshold:
 - Use **SQ mode** (`-s`) — same protein, sequence order is conserved
-- `-q 3.0` is a good default (2.0 for very tight core, 4.5 for loose)
-- The core = residues that don't move between states (the anchor)
+- **`-q 3.0` is recommended** for most conformational change analyses
+- Tighten to `-q 2.0` only when the change is small and you need a stricter anchor
+- The core = residues that stay fixed between states (the superposition anchor)
 
 **Step 2** — Apply the rotation matrix to ALL residues (not just aligned ones), then measure Cα displacement:
 - `in_core=True` residues: small displacement — structurally invariant anchor

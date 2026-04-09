@@ -5,6 +5,37 @@ Quantify how much each residue moves between two states (e.g., apo vs holo) by:
 2. Applying the rotation matrix to all residues
 3. Measuring per-residue Cα displacement
 
+## Step 0: Assess protein type before choosing strategy
+
+**Before running the analysis, check whether the protein has internal repeats or symmetry.**
+The appropriate strategy depends on the structural type:
+
+| Protein type | Strategy |
+|-------------|----------|
+| **Non-repeat protein** | Analyze whole chain directly with tight `-q` (1.0–1.4 Å) |
+| **Repeat / symmetric protein** | First run symmetry analysis (see `symmetry-analysis.md`), identify repeat units, extract each unit, then analyze each unit independently |
+
+Why this matters for repeat proteins:
+- A tandem-repeat or symmetric protein undergoing conformational change may shift the
+  register of repeats between states (e.g., one state is C4, another is slightly distorted).
+  Applying whole-chain alignment will mix inter-repeat displacement with intra-repeat
+  displacement, obscuring the true conformational change.
+- Extract each repeat unit from both states and compare unit-by-unit.
+
+## Step 1: Choose `-q` threshold
+
+For **non-repeat proteins**, use a tight threshold — it defines the "rigid core" that anchors
+the superposition, and a loose threshold dilutes the signal:
+
+| `-q` value | When to use |
+|-----------|-------------|
+| **~3.0 Å** | **Recommended for most conformational change analyses.** Captures the structurally conserved core while excluding clearly mobile regions. |
+| 2.0 Å | Stricter — use when the conformational change is small and you need a tighter anchor |
+| > 4.5 Å | Too loose for most cases — core RMSD becomes inflated and the anchor is unreliable |
+
+> **Rule of thumb:** Start with `-q 3.0`. If too few core residues are found (< 10% of chain),
+> relax to 4.0. If the core RMSD seems suspiciously large, tighten to 2.0.
+
 ## Usage
 
 ```python
@@ -16,11 +47,16 @@ from pymican import BINFILEPATH
 def analyze_conformational_change(pdb_state1: str, pdb_state2: str,
                                    q_threshold: float = 3.0) -> pd.DataFrame:
     """
-    Superpose state1 onto state2 using a tight core alignment (-q threshold),
+    Superpose state1 onto state2 using a conserved core alignment (-q threshold),
     then compute per-residue Cα displacement for all common residues.
 
     Returns DataFrame with columns: residue, ca_dist_A, in_core
-    Tip: use -s (sequential) mode — states of the same protein share sequence order.
+
+    Notes:
+    - Use -s (sequential) mode — states of the same protein share sequence order.
+    - Default q_threshold=3.0 Å is recommended for general conformational change analysis.
+    - For repeat/symmetric proteins, extract individual repeat units first and call
+      this function on each unit separately (see symmetry-analysis.md).
     """
     # Step 1: core alignment and rotation matrix
     result = subprocess.run(
@@ -40,7 +76,11 @@ def analyze_conformational_change(pdb_state1: str, pdb_state2: str,
         if line.startswith(' 3   '):
             _, vec[2], rot[2,0], rot[2,1], rot[2,2] = map(float, line.split())
 
-    print(f"Core residues (q={q_threshold}Å): {len(core_residues)}")
+    n_core = len(core_residues)
+    print(f"Core residues (q={q_threshold}Å): {n_core}")
+    if n_core == 0:
+        print(f"⚠ No core residues found at q={q_threshold} Å. Try relaxing to q=5.0.")
+        return pd.DataFrame(columns=['residue', 'ca_dist_A', 'in_core'])
 
     # Step 2: read Cα coordinates
     def read_ca(path):
@@ -70,8 +110,9 @@ def analyze_conformational_change(pdb_state1: str, pdb_state2: str,
     core_df    = df[df['in_core']]
     noncore_df = df[~df['in_core']]
     print(f"Core    RMSD: {np.sqrt((core_df['ca_dist_A']**2).mean()):.2f} Å")
-    print(f"Non-core RMSD: {np.sqrt((noncore_df['ca_dist_A']**2).mean()):.2f} Å  "
-          f"max: {noncore_df['ca_dist_A'].max():.2f} Å")
+    if not noncore_df.empty:
+        print(f"Non-core RMSD: {np.sqrt((noncore_df['ca_dist_A']**2).mean()):.2f} Å  "
+              f"max: {noncore_df['ca_dist_A'].max():.2f} Å")
 
     mobile = noncore_df[noncore_df['ca_dist_A'] > 5.0].sort_values('ca_dist_A', ascending=False)
     if not mobile.empty:
@@ -79,26 +120,55 @@ def analyze_conformational_change(pdb_state1: str, pdb_state2: str,
               f"{mobile['residue'].tolist()[:10]}{'...' if len(mobile) > 10 else ''}")
     return df
 
-# Usage
+# Usage — non-repeat protein
 df = analyze_conformational_change('apo.pdb', 'holo.pdb', q_threshold=3.0)
 # df columns: residue, ca_dist_A, in_core
 ```
 
+## Workflow for repeat proteins
+
+```python
+# 1. Run symmetry analysis on both states to identify repeat units
+#    (see symmetry-analysis.md — Internal Symmetry section)
+#    Example: 7 repeat units of ~42 residues each
+
+# 2. Extract corresponding repeat units from both states
+def extract_domain(pdb_in, pdb_out, res_start, res_end):
+    with open(pdb_in) as f, open(pdb_out, 'w') as g:
+        for line in f:
+            if line.startswith('ATOM') and res_start <= int(line[22:26]) <= res_end:
+                g.write(line)
+        g.write('END\n')
+
+unit_size = 42  # from symmetry analysis
+for i in range(7):
+    r1, r2 = 1 + i * unit_size, (i + 1) * unit_size
+    extract_domain('state1.pdb', f'/tmp/s1_unit{i}.pdb', r1, r2)
+    extract_domain('state2.pdb', f'/tmp/s2_unit{i}.pdb', r1, r2)
+
+# 3. Analyze each unit independently
+import pandas as pd
+results = []
+for i in range(7):
+    df_unit = analyze_conformational_change(
+        f'/tmp/s1_unit{i}.pdb', f'/tmp/s2_unit{i}.pdb',
+        q_threshold=3.0
+    )
+    df_unit['unit'] = i
+    results.append(df_unit)
+
+df_all = pd.concat(results, ignore_index=True)
+print(df_all.groupby('unit')['ca_dist_A'].agg(['mean', 'max']))
+```
+
 ## Interpreting results
 
-- **`in_core=True` residues** — structurally conserved anchor; changes in these are minor
-- **`in_core=False` with large displacement** — regions that move upon conformational change
-- A large jump in displacement between core and non-core (e.g., core RMSD 2 Å vs non-core RMSD 20+ Å) indicates a rigid-body domain movement
-
-## Choosing `-q` threshold
-
-| `-q` value | Effect |
-|-----------|--------|
-| 2.0 Å | Very tight — only the most invariant core |
-| 3.0 Å | Recommended default — good balance |
-| 4.5 Å | Loose — larger core but less reliable anchor |
-
-When `-q` is too loose, core RMSD will be inflated and displacement contrast is reduced.
+- **`in_core=True` residues** — structurally invariant anchor; displacement here reflects
+  alignment noise, not true conformational change
+- **`in_core=False` with large displacement** — regions that genuinely move between states
+- **Large jump between core and non-core RMSD** (e.g., core 0.5 Å vs non-core 10+ Å)
+  → rigid-body domain movement
+- **Uniform small displacement everywhere** → subtle conformational change or no change
 
 ## Visualization (matplotlib)
 
