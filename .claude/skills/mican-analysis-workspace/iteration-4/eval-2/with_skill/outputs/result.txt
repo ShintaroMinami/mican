@@ -1,0 +1,10 @@
+TMscore=0.4610  RMSD=3.60 Å  aligned=65/95
+
+ pdb1_res pdb1_aa pdb1_chain pdb2_res pdb2_aa pdb2_chain  ca_dist_A                 note
+       10       T          A       81       K          A       9.02 ⚠ uncertain (>4.5 Å)
+       20       L          A       28       I          A       0.78                   OK
+       30       S          A       40       S          A       2.93                   OK
+
+Saved: .claude/skills/mican-analysis-workspace/iteration-4/eval-2/with_skill/outputs/residue_correspondence.csv
+
+⚠ Warning: 1 residue(s) have Cα distance > 4.5 Å. These pairs are structurally distant and may not represent true functional correspondence.

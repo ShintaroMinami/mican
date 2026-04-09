@@ -1,0 +1,55 @@
+{
+  "skill_name": "mican-analysis",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Compare tests/dataset/MALISAM-ns/pdb/d1a05a_d1dgsa3.1.pdb and tests/dataset/MALISAM-ns/pdb/d1a05a_d1dgsa3.2.pdb. Working directory: /Users/sminami/github/mican",
+      "expected_output": "Announces RW mode default, then shows all TM-score variants (TMscore/TMscore1/TMscore2/TM-mean), coverage values as percentages, size-difference warning if applicable, and a TM-score interpretation label.",
+      "assertions": [
+        "Output contains an announcement that general-purpose (RW) mode is being used",
+        "All four TM-score values are present: TMscore, TMscore1, TMscore2, and mean",
+        "Coverage values are in the 0–100 range (not 0–1)",
+        "A TM-score interpretation label is included",
+        "Size-difference warning is absent (actual size ratio for this pair is < 1.5)"
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Compare tests/dataset/MALISAM-ns/pdb/d1a2za_d1ghha_.1.pdb and tests/dataset/MALISAM-ns/pdb/d1a2za_d1ghha_.2.pdb using general-purpose alignment. Show which residues in pdb2 correspond to residues 10, 20, and 30 of pdb1. Save the results as a CSV file. Working directory: /Users/sminami/github/mican",
+      "expected_output": "Residue correspondence table with a 'note' column. Pairs with Cα distance > 4.5 Å are flagged with ⚠. A summary warning is printed. A CSV file is saved.",
+      "assertions": [
+        "Corresponding pdb2 residues for pdb1 residues 10, 20, and 30 are shown",
+        "A 'note' column is present in the output",
+        "At least one residue is flagged with ⚠ (residue 10 has distance > 4.5 Å)",
+        "Residues with distance <= 4.5 Å show 'OK'",
+        "A summary warning message referencing the 4.5 Å threshold is printed",
+        "A CSV file is saved to disk"
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Compare all pairs starting with d1a05a_ (matching .1.pdb and .2.pdb) under tests/dataset/MALISAM-ns/pdb/ using general-purpose alignment. Output a table sorted by TM-score in descending order. Working directory: /Users/sminami/github/mican",
+      "expected_output": "Results for 3 pairs sorted by TMscore descending. Each row includes TMscore, TMscore1, TMscore2, TM mean, rmsd, size1, size2. The pair with size ratio >= 1.5 is flagged.",
+      "assertions": [
+        "Results for all 3 pairs are shown",
+        "Rows are sorted by TMscore in descending order",
+        "TMscore1, TMscore2, and TM mean are present for each row",
+        "Exactly one pair has a size-difference warning (the one with size ratio > 2)"
+      ],
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Compare tests/dataset/MALISAM-ns/pdb/d1a05a_d1j71a_.1.pdb and tests/dataset/MALISAM-ns/pdb/d1a05a_d1j71a_.2.pdb using general-purpose alignment. Working directory: /Users/sminami/github/mican",
+      "expected_output": "All TM-score variants are shown. A size-difference warning is triggered because the two structures differ by more than 1.5x in length. TMscore1 and TMscore2 differ noticeably.",
+      "assertions": [
+        "A size-difference warning is shown",
+        "TMscore1 and TMscore2 are both reported and differ from each other",
+        "Coverage values are shown for both proteins"
+      ],
+      "files": []
+    }
+  ]
+}

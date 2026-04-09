@@ -1,0 +1,34 @@
+Comparing d1a05a_d1dgsa3.1.pdb and d1a05a_d1dgsa3.2.pdb
+Mode: RW (Rewiring) - non-sequential alignment
+======================================================================
+
+Alignment Results:
+TM-score:        0.5020  (>0.5 = similar fold)
+TM-score1:       0.5020 (normalized by protein 1 length)
+TM-score2:       0.4180 (normalized by protein 2 length)
+RMSD:            3.98 Å
+Aligned:         74 residues
+Protein 1 size:  80 residues
+Protein 2 size:  96 residues
+Coverage 1:      9250.0%
+Coverage 2:      7710.0%
+Seq Identity:    1.4%
+DALI score:      1.63
+SP score:        0.4550
+
+First 10 aligned residue pairs:
+residue1 residue2 chain1 chain2 aatype1 aatype2 closeness distance
+       5       43      A      A       R       E      0.08     7.44
+       6       44      A      A       P       E      0.23     5.86
+       7       45      A      A       E       V      0.22     6.03
+       8       46      A      A       Q       L      0.23     5.90
+       9       47      A      A       G       A      0.43     3.66
+      10       48      A      A       L       F      0.66     2.29
+      11       49      A      A       L       E      0.47     3.40
+      12       50      A      A       R       E      0.75     1.83
+      13       51      A      A       L       R      0.86     1.26
+      14       52      A      A       R       L      0.58     2.69
+
+======================================================================
+Interpretation:
+These proteins have SIMILAR FOLDS (TM-score > 0.5)

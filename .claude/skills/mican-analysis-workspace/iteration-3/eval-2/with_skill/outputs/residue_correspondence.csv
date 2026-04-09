@@ -1,0 +1,4 @@
+pdb1_res,pdb1_aa,pdb1_chain,pdb2_res,pdb2_aa,pdb2_chain,ca_dist_A,note
+10,T,A,81,K,A,9.02,⚠ 対応不確か (>4.5Å)
+20,L,A,28,I,A,0.78,OK
+30,S,A,40,S,A,2.93,OK

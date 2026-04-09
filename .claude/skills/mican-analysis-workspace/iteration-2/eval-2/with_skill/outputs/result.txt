@@ -1,0 +1,16 @@
+=== Alignment Statistics ===
+TM-score:     0.4610
+RMSD:         3.60 Å
+Aligned:      65/95 residues
+Seq Identity: 12.3%
+
+=== Residue Correspondence ===
+pdb1 res 10 (A:T) → pdb2 res 81 (A:K), Cα=9.02 Å
+pdb1 res 20 (A:L) → pdb2 res 28 (A:I), Cα=0.78 Å
+pdb1 res 30 (A:S) → pdb2 res 40 (A:S), Cα=2.93 Å
+
+CSV saved to: .claude/skills/mican-analysis-workspace/iteration-2/eval-2/with_skill/outputs/residue_correspondence.csv
+ pdb1_residue pdb1_chain pdb1_aatype pdb2_residue pdb2_chain pdb2_aatype  ca_distance_A
+           10          A           T           81          A           K           9.02
+           20          A           L           28          A           I           0.78
+           30          A           S           40          A           S           2.93

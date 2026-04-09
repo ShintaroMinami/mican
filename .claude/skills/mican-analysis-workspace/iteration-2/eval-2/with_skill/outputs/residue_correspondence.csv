@@ -1,0 +1,4 @@
+pdb1_residue,pdb1_chain,pdb1_aatype,pdb2_residue,pdb2_chain,pdb2_aatype,ca_distance_A
+10,A,T,81,A,K,9.02
+20,A,L,28,A,I,0.78
+30,A,S,40,A,S,2.93

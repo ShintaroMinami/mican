@@ -1,0 +1,26 @@
+Running MICAN alignment with non-sequential mode (-w)...
+PDB1: /Users/sminami/github/mican/tests/dataset/MALISAM-ns/pdb/d1a2za_d1ghha_.1.pdb
+PDB2: /Users/sminami/github/mican/tests/dataset/MALISAM-ns/pdb/d1a2za_d1ghha_.2.pdb
+
+============================================================
+Alignment Results
+============================================================
+TM-score:         0.4610
+RMSD:             3.60 Å
+Aligned residues: 65/95
+Sequence identity: 12.3%
+
+============================================================
+Residue Correspondence Table
+============================================================
+PDB1 residue 10 (A:T) → PDB2 residue 81 (A:K), Cα distance = 9.02 Å
+PDB1 residue 20 (A:L) → PDB2 residue 28 (A:I), Cα distance = 0.78 Å
+PDB1 residue 30 (A:S) → PDB2 residue 40 (A:S), Cα distance = 2.93 Å
+
+Results saved to: /Users/sminami/github/mican/.claude/skills/mican-analysis-workspace/iteration-1/eval-2/with_skill/outputs/residue_correspondence.csv
+
+CSV content:
+ pdb1_residue pdb1_chain pdb1_aa pdb2_residue pdb2_chain pdb2_aa  ca_distance_A
+           10          A       T           81          A       K           9.02
+           20          A       L           28          A       I           0.78
+           30          A       S           40          A       S           2.93

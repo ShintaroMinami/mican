@@ -1,0 +1,9 @@
+=== 一括比較結果（TMscore降順） ===
+                pdb1                 pdb2  TMscore  TMscore1  TMscore2   TM平均  rmsd  size1  size2    サイズ差
+d1a05a_d1dgsa3.1.pdb d1a05a_d1dgsa3.2.pdb    0.502     0.502     0.418 0.4600 3.975     80     96        
+d1a05a_d1j71a_.1.pdb d1a05a_d1j71a_.2.pdb    0.494     0.494     0.221 0.3575 3.019     64    143 ⚠ 2.2倍差
+d1a05a_d1rblm_.1.pdb d1a05a_d1rblm_.2.pdb    0.466     0.466     0.351 0.4085 3.283     82    109        
+
+d1dgsa3.1.pdb: TMscore=0.502 → 同フォールド圏  TM平均=0.460
+d1j71a: TMscore=0.494 → 類似性低い  TM平均=0.357
+d1rblm: TMscore=0.466 → 類似性低い  TM平均=0.408
