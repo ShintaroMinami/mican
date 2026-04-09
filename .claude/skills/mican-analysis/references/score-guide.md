@@ -19,8 +19,8 @@ MICAN outputs multiple TM-score variants normalized by different reference lengt
 
 | TM-score | Interpretation |
 |----------|----------------|
-| > 0.9 | Highly similar — typical of closely related proteins (same family, etc.) |
-| > 0.7 | Similar with notable differences — typical of distantly related proteins |
+| > 0.9 | Highly similar structural match |
+| > 0.7 | Similar with notable structural differences |
 | > 0.5 | Same fold class. Proteins sharing only a common substructure can score in this range |
 | ≤ 0.5 | Low structural similarity — likely different folds |
 
@@ -66,8 +66,8 @@ if ratio >= 1.5:
 
 # Interpretation
 tm = aln.TMscore
-if   tm > 0.9: label = "Highly similar — typical of closely related proteins"
-elif tm > 0.7: label = "Similar with notable differences — typical of distantly related proteins"
+if   tm > 0.9: label = "Highly similar structural match"
+elif tm > 0.7: label = "Similar with notable structural differences"
 elif tm > 0.5: label = "Same fold class"
 else:          label = "Low structural similarity — likely different folds"
 print(f"Interpretation: TMscore={tm:.4f} → {label}")

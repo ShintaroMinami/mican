@@ -1,0 +1,20 @@
+
+=== 1cll self-comparison ===
+ ===== Brief description of top 5 alignments =====
+ Rank   sTMscore  TMscore  Dali.Z   SPscore  Length   RMSD   Seq.Id.
+    1     1.000    1.000    21.14    1.184     144   0.000   100.0
+    2     0.451    0.470     6.94    0.830      71   1.074    42.3
+    3     0.451    0.470     6.94    0.830      71   1.074    42.3
+    4     0.388    0.421     4.54    0.702      68   1.654    32.4
+    5     0.377    0.401     3.98    0.676      66   2.277    28.8
+ (TMscore was normalized by size of Protein1. 'Dali.Z'=Dali Zscore.
+
+=== 6wvs self-comparison ===
+ ===== Brief description of top 5 alignments =====
+ Rank   sTMscore  TMscore  Dali.Z   SPscore  Length   RMSD   Seq.Id.
+    1     1.000    1.000    38.10    1.271     182   0.000   100.0
+    2     0.963    0.974    32.95    1.219     180   0.635   100.0
+    3     0.959    0.970    33.45    1.210     180   0.720   100.0
+    4     0.959    0.970    33.45    1.210     180   0.720   100.0
+    5     0.709    0.740    14.61    0.832     156   2.292     9.0
+ (TMscore was normalized by size of Protein1. 'Dali.Z'=Dali Zscore.

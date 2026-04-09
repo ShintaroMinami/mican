@@ -1,0 +1,82 @@
+[
+  {
+    "query": "I have two PDB files, 1abc.pdb and 2def.pdb, in my working directory. Can you compare their structures and tell me the TM-score and RMSD?",
+    "should_trigger": true
+  },
+  {
+    "query": "I'm analyzing a calmodulin structure. I have the apo form (1cfd.pdb) and the calcium-bound form (1cll.pdb). How much does each residue move between the two states?",
+    "should_trigger": true
+  },
+  {
+    "query": "I ran MICAN on two proteins and got TMscore=0.62. Is this considered similar? What does this value mean biologically?",
+    "should_trigger": true
+  },
+  {
+    "query": "does 6wvs.pdb have any internal symmetry? i think it might be a propeller-type protein but im not sure",
+    "should_trigger": true
+  },
+  {
+    "query": "I want to map the active site residues of enzyme A (positions 42, 87, 120) to their corresponding positions in the homologous enzyme B. Both PDB files are in tests/data/.",
+    "should_trigger": true
+  },
+  {
+    "query": "I have a folder with 50 PDB files from a protein family. Can you compute pairwise TM-scores for all pairs and rank them?",
+    "should_trigger": true
+  },
+  {
+    "query": "Run MICAN on 1l0q.pdb vs itself and enumerate 20 sub-optimal alignments. Tell me what kind of symmetry the protein has based on the rotation matrices.",
+    "should_trigger": true
+  },
+  {
+    "query": "my protein is 391 residues and i think it might have tandem repeats. how can i detect them using structure comparison?",
+    "should_trigger": true
+  },
+  {
+    "query": "compare tests/dataset/skill_test/1cll.pdb and tests/dataset/skill_test/6wvs.pdb - i want the TM-score, coverage, and a residue-level alignment table saved as CSV",
+    "should_trigger": true
+  },
+  {
+    "query": "I'm trying to superpose chain A of 3abc.pdb onto chain B of 4def.pdb. The proteins are multimeric. How do I specify the chains in MICAN?",
+    "should_trigger": true
+  },
+  {
+    "query": "What is the RMSD between two alpha helices in these two crystal structures?",
+    "should_trigger": false
+  },
+  {
+    "query": "Write a Python script to parse a PDB file and extract all Cα coordinates into a numpy array.",
+    "should_trigger": false
+  },
+  {
+    "query": "I want to predict whether two proteins interact. One is a kinase and one is a substrate. Can you help?",
+    "should_trigger": false
+  },
+  {
+    "query": "Can you align the DNA sequences of these two genes and find conserved regions? I have them in FASTA format.",
+    "should_trigger": false
+  },
+  {
+    "query": "I need to calculate the solvent accessible surface area of this protein. Here is the PDB file.",
+    "should_trigger": false
+  },
+  {
+    "query": "I have a molecular dynamics trajectory in XTC format. Can you calculate the RMSD over time compared to the crystal structure?",
+    "should_trigger": false
+  },
+  {
+    "query": "perform a multiple sequence alignment of these 10 proteins using ClustalW and build a phylogenetic tree",
+    "should_trigger": false
+  },
+  {
+    "query": "I want to dock this small molecule ligand into the active site of this protein. The protein PDB is 2xyz.pdb.",
+    "should_trigger": false
+  },
+  {
+    "query": "compute the TM-score between the predicted AlphaFold model and the experimental structure using TM-align",
+    "should_trigger": false
+  },
+  {
+    "query": "I ran a BLAST search and found a homolog with 35% sequence identity. Is the structure likely to be similar?",
+    "should_trigger": false
+  }
+]

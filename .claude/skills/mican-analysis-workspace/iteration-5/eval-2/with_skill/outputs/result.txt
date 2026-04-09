@@ -1,0 +1,8 @@
+TMscore=0.4610  TMscore1=0.4610(68.4%)  TMscore2=0.5410(80.2%)  TM_mean=0.5010
+ pdb1_res pdb1_aa pdb2_res pdb2_aa  ca_dist_A                 note
+       10       T       81       K       9.02 ⚠ uncertain (>4.5 Å)
+       20       L       28       I       0.78                   OK
+       30       S       40       S       2.93                   OK
+
+⚠ Warning: 1 residue(s) have Cα distance > 4.5 Å.
+CSV saved.

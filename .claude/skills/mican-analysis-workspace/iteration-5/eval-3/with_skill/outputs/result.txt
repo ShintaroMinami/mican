@@ -1,0 +1,4 @@
+                pdb1                 pdb2  TMscore  TMscore1  TMscore2  TM_mean  rmsd  size1  size2 size_warning
+d1a05a_d1dgsa3.1.pdb d1a05a_d1dgsa3.2.pdb    0.502     0.502     0.418   0.4600 3.975     80     96             
+d1a05a_d1j71a_.1.pdb d1a05a_d1j71a_.2.pdb    0.494     0.494     0.221   0.3575 3.019     64    143       ⚠ 2.2x
+d1a05a_d1rblm_.1.pdb d1a05a_d1rblm_.2.pdb    0.466     0.466     0.351   0.4085 3.283     82    109             

@@ -1,10 +1,8 @@
-# MICAN Code Examples
+# MICAN Code Examples — Basic Operations
 
 ## Residue Correspondence
 
 ### Setup
-
-Define once at the top of any correspondence script:
 
 ```python
 from pymican import mican
@@ -144,8 +142,6 @@ subprocess.run([
 
 ## Multi-Chain Structures
 
-Specify which chain to align using `-c1` and `-c2`:
-
 ```python
 # Align chain A of pdb1 with chain B of pdb2
 aln = m.align('multi1.pdb', 'multi2.pdb', options='-w -c1 A -c2 B')
@@ -166,4 +162,43 @@ def safe_align(m, pdb1: str, pdb2: str, options: str = '-w'):
         print(f"⚠ No aligned residues found between {pdb1} and {pdb2}.")
         return None
     return aln
+```
+
+## Sub-optimal Alignments
+
+> **⚠ Use `-g 500` or higher** when enumerating sub-optimal alignments — the default (`-g 50`)
+> may miss valid alternative solutions. For symmetry analysis, use `-g 1000`.
+>
+> **⚠ For symmetry analysis**, see `symmetry-analysis.md` for how to distinguish true symmetry
+> operations from false positives based on rotation angle and unit correspondence.
+
+```python
+import subprocess
+from pymican import BINFILEPATH
+
+pdb1, pdb2 = 'protein1.pdb', 'protein2.pdb'
+
+# Top-N summary table
+result = subprocess.run(
+    [BINFILEPATH, pdb1, pdb2, '-w', '-n', '10', '-g', '500'],
+    capture_output=True, text=True
+)
+in_table = False
+for line in result.stdout.split('\n'):
+    if 'Brief description' in line: in_table = True
+    if in_table: print(line)
+    if in_table and '(TMscore was' in line: break
+
+# Residue-level detail for a specific rank (use -i RANK with -z)
+def get_alignment_by_rank(pdb1, pdb2, rank, options='-w -g 500 -n 10'):
+    result = subprocess.run(
+        [BINFILEPATH, '-z', pdb1, pdb2] + options.split() + ['-i', str(rank)],
+        capture_output=True, text=True
+    )
+    return [(int(l.split()[1]), int(l.split()[4]))
+            for l in result.stdout.split('\n')
+            if l.startswith('ALIGN') and l.split()[4] != '.']
+
+pairs = get_alignment_by_rank(pdb1, pdb2, rank=2)
+print(f"Rank 2: {len(pairs)} aligned pairs")
 ```
