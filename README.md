@@ -147,3 +147,28 @@ For more details, please read the usage.
    % rasmol -script sup.pdb
 ```
 
+# Claude code plugin
+
+This repository includes a Claude Code plugin that adds a `mican-analysis` skill for protein structure analysis directly in Claude Code.
+
+## Installation
+
+1. Add the marketplace:
+```
+/plugin marketplace add ShintaroMinami/mican
+```
+
+2. Install the plugin:
+```
+/plugin install mican@mican
+```
+
+## What it does
+
+Once installed, Claude Code can automatically run MICAN analyses when you describe structural biology tasks, such as:
+- "Compare these two PDB files"
+- "Calculate TM-score between protein A and B"
+- "Does this protein have internal symmetry?"
+- "Analyze conformational change between apo and holo structures"
+
+No manual Python scripting needed — Claude Code handles alignment, score interpretation, and result reporting.
