@@ -90,6 +90,7 @@ tm_mean = (aln.TMscore1 + aln.TMscore2) / 2
 
 - **Size ratio ≥ 1.5**: TMscore (shorter-normalized) is inflated. Use TMscore1 or TMscore2 instead, or TM mean for a symmetric view.
 - **Low coverage**: only part of one protein aligns — possible domain match, not whole-protein similarity.
+- **`seq_identity` and evolutionary relationship**: structural comparison alone cannot determine evolutionary relationship. See `score-guide.md §seq_identity` for correct interpretation — avoid asserting "structural analog" or "no evolutionary relationship" from scores alone.
 
 ---
 

@@ -70,5 +70,19 @@ MICAN outputs multiple TM-score variants normalized by different reference lengt
 | `DALIscore` | Z-score | >2: significant similarity; >8: very similar |
 | `SPscore` | 0–1 | Structural similarity accounting for alignment gaps |
 | `sTMscore` | 0–1 | SSE-weighted TM-score |
-| `seq_identity` | % | Sequence identity of aligned residue pairs |
+| `seq_identity` | % | Sequence identity of aligned residue pairs (see interpretation below) |
 | `coverage1/2` | 0–100 (%) | Fraction of each protein covered by the alignment. ⚠ Check when size ratio ≥ 1.5× |
+
+### seq_identity and Evolutionary Relationship
+
+| Range | Interpretation |
+|-------|----------------|
+| ≥ 30% | Consistent with homology (evolutionary relationship plausible) |
+| < 30% | "Twilight zone" — homology is ambiguous |
+| < 20% | Remote or no detectable relationship |
+
+⚠ **Structural comparison cannot prove or disprove evolutionary relationship.**
+- Never conclude "structural analog" or "no evolutionary relationship" from TM-score or seq_identity alone.
+- TM-score > 0.8 may *suggest* evolutionary relationship — state as suggestion, not confirmed fact.
+- seq_identity < 30%: say "relationship is unclear", not "unrelated".
+- seq_identity ≥ 30%: consistent with homology, but definitive determination requires phylogenetic analysis.
