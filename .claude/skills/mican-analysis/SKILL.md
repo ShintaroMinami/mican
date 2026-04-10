@@ -143,7 +143,7 @@ Before any further analysis, separate the solutions:
 - t∥ ≈ 0 (pure rotation, no screw component)
 - DALI Z > 2
 - Angle close to k × (360°/2n) within **~10°**, but NOT matching true Cn within ~2°
-- Example: C4 confirmed → ranks showing angles **halfway between** the 90° Cn steps (near odd multiples of 360°/2n = 45°) → pseudo C8 candidates
+- Example: C3 confirmed → ranks showing angles **halfway between** the 120° Cn steps (near odd multiples of 360°/2n = 60°) → pseudo C6 candidates
 
 To get rotation angle for each rank, use `-z -i RANK` and parse rotation matrix lines starting with ` 1   `, ` 2   `, ` 3   `. Then: `cos θ = (trace(R) − 1) / 2`.
 
@@ -156,7 +156,7 @@ For each true-symmetry rank:
 4. **Pseudo higher-order symmetry?** After confirming true Cn, check remaining significant ranks (same axis ±1°, DALI Z > 2, t∥ ≈ 0) whose angles do NOT match any Cn multiple. Test whether those angles match k × (360°/2n) within **~10°**:
    - If yes → **pseudo C(2n)** character. **Always state both** in the conclusion: *"True symmetry: Cn. Visually pseudo C(2n) — repeat units are structurally similar but not strictly equivalent (Δ~X° from exact C(2n) angles)."*
    - If no → note the unexplained rank(s) and consider domain effects.
-   - Example: C4 true → additional ranks near halfway-between angles (odd multiples of 360°/2n, within ~10°) → pseudo C8.
+   - Example: C3 true → additional ranks near halfway-between angles (odd multiples of 360°/2n, within ~10°) → pseudo C6.
    - Use detection code from `references/symmetry-analysis.md` §2.
    - Do not assert fold class (e.g., β-propeller) from angles alone.
 
@@ -166,9 +166,18 @@ Use code from `references/symmetry-analysis.md` §2.
 
 Map each residue to its repeat unit index. Check whether the unit-level mapping across ranks forms all cyclic shifts {0, 1, ..., n−1}. If yes → Cn is algebraically proven.
 
-Estimate repeat unit size from GCD of alignment shifts across ranks.
+Estimate repeat unit size from alignment shifts — **use Cn-matched ranks only, then pick the smallest dominant shift**:
+- First, filter to **Cn-matched ranks only**: those whose angle matches k/n × 360° within ~2°.
+  Do NOT include pseudo-symmetric ranks (e.g., ranks at ~38.5° in a C4 protein whose
+  shifts reflect intra-unit partial alignments, not full inter-unit steps).
+- Among Cn-matched ranks, find the most common (dominant) non-zero shift per rank.
+- Pick the rank whose dominant shift is **smallest** — that is the 1-unit rank (shift = 1×unit).
+- Compute GCD using only the **dominant shift values** (filter out minority shifts first).
+  Do NOT compute GCD over all shifts — even one outlier shift (e.g., 44 when dominant is 42)
+  will collapse GCD(42, 44) = 2, giving a wrong result.
+- Example: in C3, Rank 2 (120°) dominant shift = 50 (= 1×unit). GCD({50, 50, ...}) = 50. ✓
 
-Use code from `references/symmetry-analysis.md` §3.
+Use code from `references/symmetry-analysis.md` §4.
 
 ### Step 5: Check for multiple domains first (do this before Step 3 if uncertain)
 
@@ -177,7 +186,10 @@ Signs that the protein has multiple structural domains:
 - Lower ranks suddenly expand to the full chain (res1 max jumps)
 - Some ranks show angles that don't fit any Cn hypothesis → those ranks span a domain boundary
 
-If domain signals appear: use `extract_domain()` to split the PDB at the estimated boundary, then analyze each domain separately (restart from Step 1 for each domain).
+If domain signals appear:
+1. Use `extract_domain()` to split the PDB at the estimated boundary.
+2. Restart from Step 1 for each domain independently.
+3. For the symmetric domain, also **estimate the repeat unit count** using `estimate_unit_size()` (§4) on its sub-optimal alignments. Report this count explicitly (e.g., "4 repeat units of ~60 residues each").
 
 Use code from `references/symmetry-analysis.md` §4.
 

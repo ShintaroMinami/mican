@@ -10,33 +10,36 @@
         "All four TM-score values are present: TMscore, TMscore1, TMscore2, and mean",
         "Coverage values are in the 0–100 range (not 0–1)",
         "A TM-score interpretation label is included",
-        "Size-difference warning is absent (actual size ratio for this pair is < 1.5)"
+        "Size-difference warning is absent (actual size ratio for this pair is < 1.5)",
+        "RMSD value is reported in Å",
+        "Aligned residue count (nalign) relative to total size is reported"
       ],
       "files": []
     },
     {
       "id": 2,
-      "prompt": "Compare tests/dataset/MALISAM-ns/pdb/d1a2za_d1ghha_.1.pdb and tests/dataset/MALISAM-ns/pdb/d1a2za_d1ghha_.2.pdb using general-purpose alignment. Show which residues in pdb2 correspond to residues 10, 20, and 30 of pdb1. Save the results as a CSV file.",
-      "expected_output": "Residue correspondence table with a 'note' column. Pairs with Cα distance > 4.5 Å are flagged with ⚠. A summary warning is printed. A CSV file is saved.",
+      "prompt": "Which residues in tests/dataset/MALISAM-ns/pdb/d1a2za_d1ghha_.2.pdb match the active-site residues 10, 20, and 30 of tests/dataset/MALISAM-ns/pdb/d1a2za_d1ghha_.1.pdb? Flag any uncertain pairs.",
+      "expected_output": "Residue correspondence table with a 'note' column. Pairs with Cα distance > 4.5 Å are flagged with ⚠. A summary warning is printed.",
       "assertions": [
         "Corresponding pdb2 residues for pdb1 residues 10, 20, and 30 are shown",
         "A 'note' column is present in the output",
         "At least one residue is flagged with ⚠ (residue 10 has distance > 4.5 Å)",
         "Residues with distance <= 4.5 Å show 'OK'",
         "A summary warning message referencing the 4.5 Å threshold is printed",
-        "A CSV file is saved to disk"
+        "Alignment mode used is RW (-w) or equivalent general-purpose mode"
       ],
       "files": []
     },
     {
       "id": 3,
-      "prompt": "Compare all pairs starting with d1a05a_ (matching .1.pdb and .2.pdb) under tests/dataset/MALISAM-ns/pdb/ using general-purpose alignment. Output a table sorted by TM-score in descending order.",
+      "prompt": "I have a set of protein structures starting with d1a05a_ in tests/dataset/MALISAM-ns/pdb/. Compare all .1.pdb / .2.pdb pairs and give me a summary of how structurally similar they are.",
       "expected_output": "Results for 3 pairs sorted by TMscore descending. Each row includes TMscore, TMscore1, TMscore2, TM mean, rmsd, size1, size2. The pair with size ratio >= 1.5 is flagged.",
       "assertions": [
         "Results for all 3 pairs are shown",
         "Rows are sorted by TMscore in descending order",
         "TMscore1, TMscore2, and TM mean are present for each row",
-        "Exactly one pair has a size-difference warning (the one with size ratio > 2)"
+        "Exactly one pair has a size-difference warning (the one with size ratio > 2)",
+        "Results are presented in a table or structured format"
       ],
       "files": []
     },
@@ -47,29 +50,29 @@
       "assertions": [
         "A size-difference warning is shown",
         "TMscore1 and TMscore2 are both reported and differ from each other",
-        "Coverage values are shown for both proteins"
+        "Coverage values are shown for both proteins",
+        "A TM-score interpretation label is included"
       ],
       "files": []
     },
     {
       "id": 5,
-      "prompt": "Analyze the internal structural symmetry of tests/dataset/skill_test/1cll.pdb and tests/dataset/skill_test/6wvs.pdb by comparing each protein against itself. Use -g 1000 and retrieve at least 5 solutions. For each protein, report whether statistically significant internal symmetry is detected (DALI Z-score > 2 in Rank 2+), and describe which regions correspond to each other.",
-      "expected_output": "Self-comparison for both 1cll and 6wvs. Rank 1 shows perfect self-match (TMscore=1.000, RMSD=0.00). Rank 2+ reveals internal domain symmetry for both proteins. 6wvs shows much stronger symmetry (DALI Z ~20, RMSD ~0.6 Å) than 1cll (DALI Z ~6.9). The corresponding regions are identified for each protein.",
+      "prompt": "Analyze the internal structure of tests/dataset/skill_test/1l0q.pdb. Does it have any structural symmetry, and does the whole protein behave as a single symmetric unit?",
+      "expected_output": "Self-comparison reveals internal symmetry in the first domain (7-bladed beta-propeller, C7). The second domain (PKD domain) is non-symmetric. A domain boundary is detected and the two domains are analyzed separately.",
       "assertions": [
-        "Self-comparison is performed for both 1cll and 6wvs",
-        "Rank 1 for each protein shows TMscore=1.000 and RMSD=0.00",
-        "-g 1000 is used to ensure thorough search coverage",
-        "Rank 2 DALI Z-score is reported for both proteins",
-        "1cll Rank 2 DALI Z-score is > 2 (statistically significant internal symmetry)",
-        "6wvs Rank 2 DALI Z-score is > 2 (statistically significant internal symmetry)",
-        "6wvs shows stronger internal symmetry than 1cll (higher DALI Z and lower RMSD in Rank 2)",
-        "The internally symmetric regions are identified for each protein"
+        "Self-comparison is performed (protein compared against itself)",
+        "-g 1000 is used for self-comparison (not the default -g 50)",
+        "Rank 1 shows TMscore=1.000 and RMSD=0.00 (perfect self-match)",
+        "Internal symmetry is detected (DALI Z > 2 in Rank 2+)",
+        "Domain boundary is detected — not all ranks cover the full chain",
+        "The symmetric domain and the non-symmetric domain are identified separately",
+        "The repeat unit count in the symmetric domain is estimated (expected: ~7)"
       ],
       "files": []
     },
     {
       "id": 6,
-      "prompt": "Analyze the rotational symmetry of tests/dataset/skill_test/6wvs.pdb using rotation matrix analysis and cyclic permutation detection. Use RW mode with -g 1000 and -n 20. (1) Extract rotation angle and rotation axis for Rank 2-8; (2) verify that multiple ranks share the same rotation axis; (3) estimate the repeat unit size from alignment shifts; (4) check whether the unit-level correspondence forms a cyclic permutation across ranks; (5) identify and filter out false-positive solutions (small rotation angle, same-unit correspondence). Conclude what rotational symmetry the protein has.",
+      "prompt": "What kind of rotational symmetry does tests/dataset/skill_test/6wvs.pdb have? Is it C2, C4, C6, or something else?",
       "expected_output": "Rotation angles for Rank 2-8 are extracted (180°, 90°, 90°, ~141°, ~141°, ~38°, ~38°). All ranks share the same rotation axis within ~1°. Repeat unit size is estimated as 46 residues. Rank 2-8 all show cyclic permutation of 4 units, confirming C4 symmetry. Rank 9+ are identified as false positives (rotation angle < 20°, same-unit correspondence). Conclusion: C4 rotational symmetry (pseudo C8 considering sub-unit internal repeats).",
       "assertions": [
         "Rotation angles are extracted for Rank 2-8 from the rotation matrices",
@@ -77,10 +80,13 @@
         "Rank 3 or 4 rotation angle is approximately 90°",
         "The rotation axes of Rank 2, 3, and 4 are aligned within 1°",
         "The repeat unit size is estimated (expected: ~46 residues)",
-        "Cyclic permutation is detected for Rank 2-8 (all 4-unit cyclic shifts present)",
+        "Cyclic permutation is detected: all non-trivial cyclic shifts (shifts 1, 2, 3 for C4) are present across Cn-matched ranks, confirming C4 algebraically",
         "At least one rank (among Rank 2-8) is identified as a false positive or as showing pseudo higher-order symmetry character (rotation angle not matching C4 exactly)",
         "C4 rotational symmetry is concluded",
-        "Rank 7 or 8 rotation angle is noted as not matching C4 exactly, and the possibility of pseudo higher-order symmetry is mentioned"
+        "Rank 7 or 8 rotation angle is noted as not matching C4 exactly, and the possibility of pseudo higher-order symmetry is mentioned",
+        "Rotation matrix analysis is performed (rotation angles extracted for multiple ranks)",
+        "Cyclic permutation check is performed",
+        "False positive solutions are identified and excluded"
       ],
       "files": []
     }

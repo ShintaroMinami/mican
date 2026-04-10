@@ -5,15 +5,15 @@ Quantify how much each residue moves between two states (e.g., apo vs holo) by:
 2. Applying the rotation matrix to all residues
 3. Measuring per-residue Cα displacement
 
-## Step 0: Assess protein type before choosing strategy
+## Step 0: Assess Protein Type Before Choosing Strategy
 
 **Before running the analysis, check whether the protein has internal repeats or symmetry.**
 The appropriate strategy depends on the structural type:
 
 | Protein type | Strategy |
 |-------------|----------|
-| **Non-repeat protein** | Analyze whole chain directly with tight `-q` (1.0–1.4 Å) |
-| **Repeat / symmetric protein** | First run symmetry analysis (see `symmetry-analysis.md`), identify repeat units, extract each unit, then analyze each unit independently |
+| **Non-repeat protein** | Analyze whole chain directly → proceed to Step 1 then Step 2 |
+| **Repeat / symmetric protein** | First run symmetry analysis (see `symmetry-analysis.md`), identify repeat units, extract each unit, then analyze each unit independently → Skip to Step 3 |
 
 Why this matters for repeat proteins:
 - A tandem-repeat or symmetric protein undergoing conformational change may shift the
@@ -22,7 +22,7 @@ Why this matters for repeat proteins:
   displacement, obscuring the true conformational change.
 - Extract each repeat unit from both states and compare unit-by-unit.
 
-## Step 1: Choose `-q` threshold
+## Step 1: Choose `-q` Threshold
 
 For **non-repeat proteins**, use a tight threshold — it defines the "rigid core" that anchors
 the superposition, and a loose threshold dilutes the signal:
@@ -36,7 +36,7 @@ the superposition, and a loose threshold dilutes the signal:
 > **Rule of thumb:** Start with `-q 3.0`. If too few core residues are found (< 10% of chain),
 > relax to 4.0. If the core RMSD seems suspiciously large, tighten to 2.0.
 
-## Usage
+## Step 2: Run Per-Residue Displacement Analysis
 
 ```python
 import subprocess
@@ -56,7 +56,7 @@ def analyze_conformational_change(pdb_state1: str, pdb_state2: str,
     - Use -s (sequential) mode — states of the same protein share sequence order.
     - Default q_threshold=3.0 Å is recommended for general conformational change analysis.
     - For repeat/symmetric proteins, extract individual repeat units first and call
-      this function on each unit separately (see symmetry-analysis.md).
+      this function on each unit separately (see Step 3 in this file).
     """
     # Step 1: core alignment and rotation matrix
     result = subprocess.run(
@@ -125,7 +125,7 @@ df = analyze_conformational_change('apo.pdb', 'holo.pdb', q_threshold=3.0)
 # df columns: residue, ca_dist_A, in_core
 ```
 
-## Workflow for repeat proteins
+## Step 3: Workflow for Repeat Proteins
 
 ```python
 # 1. Run symmetry analysis on both states to identify repeat units
@@ -140,8 +140,8 @@ def extract_domain(pdb_in, pdb_out, res_start, res_end):
                 g.write(line)
         g.write('END\n')
 
-unit_size = 42  # from symmetry analysis
-for i in range(7):
+unit_size = 40  # from symmetry analysis — replace with your actual repeat unit size
+for i in range(8):
     r1, r2 = 1 + i * unit_size, (i + 1) * unit_size
     extract_domain('state1.pdb', f'/tmp/s1_unit{i}.pdb', r1, r2)
     extract_domain('state2.pdb', f'/tmp/s2_unit{i}.pdb', r1, r2)
@@ -149,7 +149,7 @@ for i in range(7):
 # 3. Analyze each unit independently
 import pandas as pd
 results = []
-for i in range(7):
+for i in range(8):
     df_unit = analyze_conformational_change(
         f'/tmp/s1_unit{i}.pdb', f'/tmp/s2_unit{i}.pdb',
         q_threshold=3.0
@@ -161,7 +161,7 @@ df_all = pd.concat(results, ignore_index=True)
 print(df_all.groupby('unit')['ca_dist_A'].agg(['mean', 'max']))
 ```
 
-## Interpreting results
+## Step 4: Interpreting Results
 
 - **`in_core=True` residues** — structurally invariant anchor; displacement here reflects
   alignment noise, not true conformational change
@@ -170,7 +170,7 @@ print(df_all.groupby('unit')['ca_dist_A'].agg(['mean', 'max']))
   → rigid-body domain movement
 - **Uniform small displacement everywhere** → subtle conformational change or no change
 
-## Visualization (matplotlib)
+## Step 5 (Optional): Visualization
 
 ```python
 import matplotlib

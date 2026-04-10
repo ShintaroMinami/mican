@@ -1,50 +1,6 @@
 # MICAN Score Reference Guide
 
-## TM-score Variants — Choose Carefully
-
-MICAN outputs multiple TM-score variants normalized by different reference lengths.
-**The choice matters, especially when the two structures differ significantly in size.**
-
-| Attribute | Normalized by | Characteristic |
-|-----------|--------------|----------------|
-| `TMscore1` | Length of pdb1 | pdb1 perspective — tends to be higher when pdb1 is shorter |
-| `TMscore2` | Length of pdb2 | pdb2 perspective — tends to be higher when pdb2 is shorter |
-| `TMscore`  | Shorter structure (min) | MICAN default — can be inflated when structures differ greatly in size |
-
-> **⚠ Size difference**: When structures differ greatly in length (e.g., 100 vs 300 residues),
-> `TMscore` (normalized by the shorter) may appear high even though most of the longer structure
-> is unaligned. Always check `coverage1`/`coverage2` in such cases.
-
-## TM-score Interpretation
-
-| TM-score | Interpretation |
-|----------|----------------|
-| > 0.9 | Highly similar structural match |
-| > 0.7 | Similar with notable structural differences |
-| > 0.5 | Same fold class. Proteins sharing only a common substructure can score in this range |
-| ≤ 0.5 | Low structural similarity — likely different folds |
-
-## Recommended Score by Task
-
-| Goal | Recommended score | Reason |
-|------|------------------|--------|
-| Comparing proteins of similar size | `TMscore` | Reliable in this case |
-| One structure is much larger (e.g., domain search) | `TMscore1` or `TMscore2` | Normalize by the structure of interest |
-| Size-symmetric metric | `(TMscore1 + TMscore2) / 2` | Treats both lengths equally |
-| Motif-level similarity | `sTMscore` | SSE-weighted; useful for structural motif comparison |
-
-## Other Scores
-
-| Score | Range | Meaning |
-|-------|-------|---------|
-| `rmsd` | Å | RMS Cα distance over aligned residues. Can be underestimated when `nalign` is small |
-| `DALIscore` | Z-score | >2: significant similarity; >8: very similar |
-| `SPscore` | 0–1 | Structural similarity accounting for alignment gaps |
-| `sTMscore` | 0–1 | SSE-weighted TM-score |
-| `seq_identity` | % | Sequence identity of aligned residue pairs |
-| `coverage1/2` | 0–100 (%) | Fraction of each protein covered by the alignment |
-
-## Standard Output Block
+## Quick Start: Report All Scores
 
 Use this pattern for all basic alignment results:
 
@@ -72,3 +28,47 @@ elif tm > 0.5: label = "Same fold class"
 else:          label = "Low structural similarity — likely different folds"
 print(f"Interpretation: TMscore={tm:.4f} → {label}")
 ```
+
+## Recommended Score by Task
+
+| Goal | Recommended score | Reason |
+|------|------------------|--------|
+| Comparing proteins of similar size | `TMscore` | Reliable in this case |
+| One structure is much larger (e.g., domain search) | `TMscore1` or `TMscore2` | Normalize by the structure of interest |
+| Size-symmetric metric | `(TMscore1 + TMscore2) / 2` | Treats both lengths equally |
+| Motif-level similarity | `sTMscore` | SSE-weighted; useful for structural motif comparison |
+
+## TM-score Variants — Choose Carefully
+
+MICAN outputs multiple TM-score variants normalized by different reference lengths.
+**The choice matters, especially when the two structures differ significantly in size.**
+
+| Attribute | Normalized by | Characteristic |
+|-----------|--------------|----------------|
+| `TMscore1` | Length of pdb1 | pdb1 perspective — tends to be higher when pdb1 is shorter |
+| `TMscore2` | Length of pdb2 | pdb2 perspective — tends to be higher when pdb2 is shorter |
+| `TMscore`  | Shorter structure (min) | MICAN default — can be inflated when structures differ greatly in size |
+
+> **⚠ Size difference**: When structures differ greatly in length (e.g., 100 vs 300 residues),
+> `TMscore` (normalized by the shorter) may appear high even though most of the longer structure
+> is unaligned. Always check `coverage1`/`coverage2` in such cases.
+
+## TM-score Interpretation
+
+| TM-score | Interpretation |
+|----------|----------------|
+| > 0.9 | Highly similar structural match |
+| > 0.7 | Similar with notable structural differences |
+| > 0.5 | Same fold class. Proteins sharing only a common substructure can score in this range |
+| ≤ 0.5 | Low structural similarity — likely different folds |
+
+## Other Scores
+
+| Score | Range | Meaning |
+|-------|-------|---------|
+| `rmsd` | Å | RMS Cα distance over aligned residues. Can be underestimated when `nalign` is small |
+| `DALIscore` | Z-score | >2: significant similarity; >8: very similar |
+| `SPscore` | 0–1 | Structural similarity accounting for alignment gaps |
+| `sTMscore` | 0–1 | SSE-weighted TM-score |
+| `seq_identity` | % | Sequence identity of aligned residue pairs |
+| `coverage1/2` | 0–100 (%) | Fraction of each protein covered by the alignment. ⚠ Check when size ratio ≥ 1.5× |

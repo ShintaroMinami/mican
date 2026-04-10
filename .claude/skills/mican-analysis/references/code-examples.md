@@ -5,6 +5,7 @@
 ### Setup
 
 ```python
+# Common setup for all Residue Correspondence snippets below.
 from pymican import mican
 import pandas as pd
 
@@ -83,6 +84,8 @@ if not warned.empty:
 ### Full Correspondence Table
 
 ```python
+CA_DIST_WARN = 4.5  # Å — pairs beyond this are structurally loose matches
+
 df = aln.alignment.copy()
 df['distance'] = df['distance'].astype(float)
 df['note'] = df['distance'].apply(lambda d: '⚠ uncertain (>4.5 Å)' if d > CA_DIST_WARN else 'OK')
@@ -96,56 +99,7 @@ if n_warn:
           "These pairs are structurally distant and may not represent true functional correspondence.")
 ```
 
-## Batch Comparison
-
-```python
-from pathlib import Path
-
-m = mican()
-pdb_files = sorted(Path('pdbs/').glob('*.pdb'))
-
-if len(pdb_files) > 100:
-    print(f"⚠ {len(pdb_files)} files found — using fast mode (-f) for screening.")
-
-results = []
-for i, p1 in enumerate(pdb_files):
-    for p2 in pdb_files[i+1:]:
-        aln = m.align(str(p1), str(p2), options='-w -f')
-        tm_mean = (aln.TMscore1 + aln.TMscore2) / 2
-        ratio = max(aln.size1, aln.size2) / min(aln.size1, aln.size2)
-        results.append({
-            'pdb1': p1.name, 'pdb2': p2.name,
-            'TMscore': aln.TMscore, 'TMscore1': aln.TMscore1, 'TMscore2': aln.TMscore2,
-            'TM_mean': tm_mean, 'rmsd': aln.rmsd, 'nalign': aln.nalign,
-            'size1': aln.size1, 'size2': aln.size2,
-            'size_warning': f'⚠ {ratio:.1f}x size diff' if ratio >= 1.5 else ''
-        })
-
-df = pd.DataFrame(results).sort_values('TMscore', ascending=False)
-print(df.to_string(index=False))
-```
-
-## Save Alignment and Superposition Files
-
-```python
-import subprocess
-from pymican import BINFILEPATH
-
-subprocess.run([
-    BINFILEPATH,
-    'protein1.pdb', 'protein2.pdb',
-    '-w',
-    '-a', 'alignment.aln',
-    '-o', 'superposed.pdb',
-])
-```
-
-## Multi-Chain Structures
-
-```python
-# Align chain A of pdb1 with chain B of pdb2
-aln = m.align('multi1.pdb', 'multi2.pdb', options='-w -c1 A -c2 B')
-```
+---
 
 ## Error Handling
 
@@ -163,6 +117,17 @@ def safe_align(m, pdb1: str, pdb2: str, options: str = '-w'):
         return None
     return aln
 ```
+
+---
+
+## Multi-Chain Structures
+
+```python
+# Align chain A of pdb1 with chain B of pdb2
+aln = m.align('multi1.pdb', 'multi2.pdb', options='-w -c1 A -c2 B')
+```
+
+---
 
 ## Sub-optimal Alignments
 
@@ -201,4 +166,53 @@ def get_alignment_by_rank(pdb1, pdb2, rank, options='-w -g 500 -n 10'):
 
 pairs = get_alignment_by_rank(pdb1, pdb2, rank=2)
 print(f"Rank 2: {len(pairs)} aligned pairs")
+```
+
+---
+
+## Batch Comparison
+
+```python
+from pathlib import Path
+import pandas as pd
+
+m = mican()
+pdb_files = sorted(Path('pdbs/').glob('*.pdb'))
+
+if len(pdb_files) > 100:
+    print(f"⚠ {len(pdb_files)} files found — using fast mode (-f) for screening.")
+
+results = []
+for i, p1 in enumerate(pdb_files):
+    for p2 in pdb_files[i+1:]:
+        aln = m.align(str(p1), str(p2), options='-w -f')
+        tm_mean = (aln.TMscore1 + aln.TMscore2) / 2
+        ratio = max(aln.size1, aln.size2) / min(aln.size1, aln.size2)
+        results.append({
+            'pdb1': p1.name, 'pdb2': p2.name,
+            'TMscore': aln.TMscore, 'TMscore1': aln.TMscore1, 'TMscore2': aln.TMscore2,
+            'TM_mean': tm_mean, 'rmsd': aln.rmsd, 'nalign': aln.nalign,
+            'size1': aln.size1, 'size2': aln.size2,
+            'size_warning': f'⚠ {ratio:.1f}x size diff' if ratio >= 1.5 else ''
+        })
+
+df = pd.DataFrame(results).sort_values('TMscore', ascending=False)
+print(df.to_string(index=False))
+```
+
+---
+
+## Save Alignment / Superposition Files
+
+```python
+import subprocess
+from pymican import BINFILEPATH
+
+subprocess.run([
+    BINFILEPATH,
+    'protein1.pdb', 'protein2.pdb',
+    '-w',
+    '-a', 'alignment.aln',
+    '-o', 'superposed.pdb',
+])
 ```
