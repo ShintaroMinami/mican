@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "MICAN protein structure alignment — skills for structural comparison, symmetry analysis, residue correspondence, conformational change analysis, and domain detection.",
-    "version": "1.0.1"
+    "version": "1.0.2"
   },
   "plugins": [
     {
