@@ -27,14 +27,8 @@ float SPscore(int naa1, int naa2, RESDAT *resdat1, RESDAT *resdat2,
   /**     calloc    **/
   /*******************/
   /**  coordinates  **/
-  co1 = (float **)calloc((size_t)(naa1 + 1), sizeof(float *));
-  co2 = (float **)calloc((size_t)(naa2 + 1), sizeof(float *));
-  for (iaa = 1; iaa <= naa1; iaa++) {
-    co1[iaa] = (float *)calloc(3 + 1, sizeof(float));
-  }
-  for (iaa = 1; iaa <= naa2; iaa++) {
-    co2[iaa] = (float *)calloc(3 + 1, sizeof(float));
-  }
+  co1 = calloc_coords(naa1);
+  co2 = calloc_coords(naa2);
   /**  core residues  **/
   iaa1_core = (int *)calloc((size_t)(naa1 + 1), sizeof(int));
   iaa2_core = (int *)calloc((size_t)(naa2 + 1), sizeof(int));
@@ -177,14 +171,8 @@ float SPscore(int naa1, int naa2, RESDAT *resdat1, RESDAT *resdat2,
   /**************/
   /**   free   **/
   /**************/
-  for (iaa = 1; iaa <= naa1; iaa++) {
-    free(co1[iaa]);
-  }
-  for (iaa = 1; iaa <= naa2; iaa++) {
-    free(co2[iaa]);
-  }
-  free(co1);
-  free(co2);
+  free_coords(co1);
+  free_coords(co2);
 
   free(ALcheck1);
   free(ALcheck2);

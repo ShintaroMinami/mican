@@ -5,13 +5,67 @@ PRIVATE void get_xyz(char *buffer, int naa, int *iaa, int *iatom,
 		     RESDAT *resdat, ALLATM *allatm, int chainID);
 PRIVATE int column_chainID = 21;
 
+/*
+ * Fixed-column readers for PDB lines, equivalent to the fsscanf() formats
+ * they replace: a line ends at its first '\n' or NUL, and a field is the part
+ * of columns [start, start + width) before that end.
+ *   field_str : like "%<width>s" (padded with spaces to width)
+ *   field_chr : like "%c"        (' ' when the line is shorter)
+ *   field_int / field_flt : like "%<width>d" / "%<width>f"
+ *                (0 for a blank field, unchanged if not a number)
+ * Example: line "ATOM      1  CA  ALA A   1 ..." -> field_str(.., 12, 4) = " CA ".
+ */
+PRIVATE int line_end(const char *s) { return (int)strcspn(s, "\n"); }
+
+PRIVATE int get_field(const char *s, int end, int start, int width,
+                      char *buf) {
+  int n = 0;
+  if (start < end) {
+    n = (start + width <= end) ? width : end - start;
+    memcpy(buf, s + start, (size_t)n);
+  }
+  buf[n] = '\0';
+  return n;
+}
+
+PRIVATE void field_str(const char *s, int end, int start, int width,
+                       char *out) {
+  int n = get_field(s, end, start, width, out);
+  for (; n < width; n++) {
+    out[n] = ' ';
+  }
+  out[width] = '\0';
+}
+
+PRIVATE char field_chr(const char *s, int end, int start) {
+  return (start < end && s[start] != '\0') ? s[start] : ' ';
+}
+
+PRIVATE void field_int(const char *s, int end, int start, int width,
+                       int *out) {
+  char buf[16];
+  get_field(s, end, start, width, buf);
+  if (scan_int(buf, out) == (-1)) {
+    *out = 0;
+  }
+}
+
+PRIVATE void field_flt(const char *s, int end, int start, int width,
+                       float *out) {
+  char buf[16];
+  get_field(s, end, start, width, buf);
+  if (scan_float(buf, out) == (-1)) {
+    *out = (float)0.0;
+  }
+}
+
 /****************************/
 /*    FUNCTION  get_naa     */
 /****************************/
 void get_naa_natom(char *filename, char *chainID, int *naa, int *natom) {
   int iaa, i;
   int iatom;
-  int sw, len;
+  int sw, len, end;
   FILE *fp;
   char buffer[BUFSIZE + 1];
   char res[4 + 1];
@@ -35,7 +89,9 @@ void get_naa_natom(char *filename, char *chainID, int *naa, int *natom) {
       break;
     }
     if (strncmp(buffer, "ATOM ", 5) == 0 || strncmp(buffer, "HETATM", 6) == 0) {
-      fsscanf(buffer, "%12x%4s%5x%c", res, &ch);
+      end = line_end(buffer);
+      field_str(buffer, end, 12, 4, res);
+      ch = field_chr(buffer, end, 21);
       if (strcmp(chainID, "0") != 0) {
         sw = OFF;
         for (i = 0; i <= len; i++) {
@@ -84,7 +140,7 @@ void check_CA(char *filename, char *chainID, RESDAT *resdat) {
   char buffer[BUFSIZE + 1];
   char res[4 + 1], ch;
   int org;
-  int sw, len;
+  int sw, len, end;
 
   len = (int)strlen(chainID);
 
@@ -103,7 +159,10 @@ void check_CA(char *filename, char *chainID, RESDAT *resdat) {
       break;
     }
     if (strncmp(buffer, "ATOM ", 5) == 0 || strncmp(buffer, "HETATM", 6) == 0) {
-      fsscanf(buffer, "%12x%4s%5x%c%4d", res, &ch, &org);
+      end = line_end(buffer);
+      field_str(buffer, end, 12, 4, res);
+      ch = field_chr(buffer, end, 21);
+      field_int(buffer, end, 22, 4, &org);
       if (strcmp(chainID, "0") != 0) {
         sw = OFF;
         for (i = 0; i <= len; i++) {
@@ -174,7 +233,7 @@ void read_pdb(char *filename, char *chainID, int naa, int natom, RESDAT *resdat,
     }
     ch = '\0';
     if (strncmp(buffer, "ATOM ", 5) == 0 || strncmp(buffer, "HETATM", 6) == 0) {
-      fsscanf(buffer, "%21x%c", &ch);
+      ch = field_chr(buffer, line_end(buffer), 21);
       if (strcmp(chainID, "0") != 0) {
         sw = OFF;
         for (i = 0; i <= len; i++) {
@@ -236,45 +295,25 @@ PRIVATE void get_xyz(char *buffer, int naa, int *iaa, int *iatom,
   char element[2 + 1];
   char charge[2 + 1];
 
-  /*               1  2  3  4  5  6  7  8  9  0  1  2  3  4  5  6  7  8  9  0 */
-  fsscanf(buffer,
-          "%6s%5d%1x%4s%1s%3s%1x%1s%4d%1s%3x%8f%8f%8f%6f%6f%6x%4s%2s%2s",
-          record /* %6s (1) */
-          ,
-          &serial /* %5d (2) */
-                  /* %1x (3) */
-          ,
-          name /* %4s (4) */
-          ,
-          altLoc /* %1s (5) */
-          ,
-          resName /* %3s (6) */
-                  /* %1x (7) */
-          ,
-          chainID_org /* %1s (8) */
-          ,
-          &resSeq /* %4d (9) */
-          ,
-          iCode /* %8f (0) */
-                /* %1x (1) */
-          ,
-          &x /* %8f (2) */
-          ,
-          &y /* %8f (3) */
-          ,
-          &z /* %6f (4) */
-          ,
-          &occupancy /* %6f (5) */
-          ,
-          &tempFactor /* %6x (6) */
-                      /* %6x (7) */
-          ,
-          segID /* %4s (8) */
-          ,
-          element /* %2s (9) */
-          ,
-          charge /* %2s (0) */
-          );
+  /* Same fields as the fsscanf() format
+     "%6s%5d%1x%4s%1s%3s%1x%1s%4d%1s%3x%8f%8f%8f%6f%6f%6x%4s%2s%2s" */
+  int end = line_end(buffer);
+  field_str(buffer, end, 0, 6, record);
+  field_int(buffer, end, 6, 5, &serial);
+  field_str(buffer, end, 12, 4, name);
+  field_str(buffer, end, 16, 1, altLoc);
+  field_str(buffer, end, 17, 3, resName);
+  field_str(buffer, end, 21, 1, chainID_org);
+  field_int(buffer, end, 22, 4, &resSeq);
+  field_str(buffer, end, 26, 1, iCode);
+  field_flt(buffer, end, 30, 8, &x);
+  field_flt(buffer, end, 38, 8, &y);
+  field_flt(buffer, end, 46, 8, &z);
+  field_flt(buffer, end, 54, 6, &occupancy);
+  field_flt(buffer, end, 60, 6, &tempFactor);
+  field_str(buffer, end, 72, 4, segID);
+  field_str(buffer, end, 76, 2, element);
+  field_str(buffer, end, 78, 2, charge);
 
   /**  check chainID  **/
   if (strncmp(chainID_org, " ", 1) == 0) {

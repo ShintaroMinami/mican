@@ -25,12 +25,13 @@ void main_align(void) {
   SSEDAT *ssedat_q;
   SSEDAT *ssedat_t;
 
-  HASH_TABLE ***hash;
+  HASH_TABLE ***hash, **hash_rows, *hash_cells;
+  int *pool_i;
+  float **pool_p, *pool_f;
+  size_t n1, ntot, off;
   HASH_RESULT *hres;
   ALIGN *align;
   ALIGN align_tmp;
-  float ***mat;
-  float **score, **score_r;
 
   PDBDAT pdbdat_q;
   PDBDAT pdbdat_t;
@@ -194,34 +195,41 @@ void main_align(void) {
     nhash = input.max_hash;
   }
 
-  /**  calloc HASH_TABLE 1  **/
-  hash = (HASH_TABLE ***)calloc((size_t)(nhash + 1), sizeof(HASH_TABLE **));
+  /**  calloc HASH_TABLE 1 (cells in one contiguous block)  **/
+  n1 = (size_t)(nhash + 1);
+  hash = (HASH_TABLE ***)malloc(n1 * sizeof(HASH_TABLE **));
+  hash_rows = (HASH_TABLE **)malloc(n1 * n1 * sizeof(HASH_TABLE *));
+  hash_cells = (HASH_TABLE *)calloc(n1 * n1 * n1, sizeof(HASH_TABLE));
   for (i = 0; i <= nhash; i++) {
-    hash[i] = (HASH_TABLE **)calloc((size_t)(nhash + 1), sizeof(HASH_TABLE *));
+    hash[i] = hash_rows + (size_t)i * n1;
     for (j = 0; j <= nhash; j++) {
-      hash[i][j] =
-          (HASH_TABLE *)calloc((size_t)(nhash + 1), sizeof(HASH_TABLE));
+      hash[i][j] = hash_cells + ((size_t)i * n1 + (size_t)j) * n1;
     }
   }
   /**  pre make hash  **/
   pre_make_hash(nsse_q, nhash, hash, ssedat_q);
 
-  /**  calloc HASH_TABLE 2  **/
+  /**  calloc HASH_TABLE 2 (per-cell lists carved out of shared pools)  **/
+  ntot = 0;
+  for (i = 0; i < (int)(n1 * n1 * n1); i++) {
+    ntot += (size_t)(hash_cells[i].nlist + 1);
+  }
+  pool_i = (int *)calloc(2 * ntot, sizeof(int));
+  pool_p = (float **)malloc(2 * ntot * sizeof(float *));
+  pool_f = (float *)calloc(2 * ntot * 3, sizeof(float));
+  off = 0;
   for (i = 0; i <= nhash; i++) {
     for (j = 0; j <= nhash; j++) {
       for (k = 0; k <= nhash; k++) {
-        hash[i][j][k].isse =
-            (int *)calloc((size_t)(hash[i][j][k].nlist + 1), sizeof(int));
-        hash[i][j][k].ssetype =
-            (int *)calloc((size_t)(hash[i][j][k].nlist + 1), sizeof(int));
-        hash[i][j][k].para = (float **)calloc((size_t)(hash[i][j][k].nlist + 1),
-                                              sizeof(float *));
-        hash[i][j][k].perp = (float **)calloc((size_t)(hash[i][j][k].nlist + 1),
-                                              sizeof(float *));
+        hash[i][j][k].isse = pool_i + off;
+        hash[i][j][k].ssetype = pool_i + ntot + off;
+        hash[i][j][k].para = pool_p + off;
+        hash[i][j][k].perp = pool_p + ntot + off;
         for (ilist = 0; ilist <= hash[i][j][k].nlist; ilist++) {
-          hash[i][j][k].para[ilist] = (float *)calloc(3, sizeof(float));
-          hash[i][j][k].perp[ilist] = (float *)calloc(3, sizeof(float));
+          hash[i][j][k].para[ilist] = pool_f + 3 * (off + (size_t)ilist);
+          hash[i][j][k].perp[ilist] = pool_f + 3 * (ntot + off + (size_t)ilist);
         }
+        off += (size_t)(hash[i][j][k].nlist + 1);
       }
     }
   }
@@ -247,22 +255,11 @@ void main_align(void) {
   /***************************/
   /**    free hash table    **/
   /***************************/
-  for (i = 0; i <= nhash; i++) {
-    for (j = 0; j <= nhash; j++) {
-      for (k = 0; k <= nhash; k++) {
-        free(hash[i][j][k].isse);
-        free(hash[i][j][k].ssetype);
-        for (ilist = 0; ilist <= hash[i][j][k].nlist; ilist++) {
-          free(hash[i][j][k].para[ilist]);
-          free(hash[i][j][k].perp[ilist]);
-        }
-        free(hash[i][j][k].para);
-        free(hash[i][j][k].perp);
-      }
-      free(hash[i][j]);
-    }
-    free(hash[i]);
-  }
+  free(pool_f);
+  free(pool_p);
+  free(pool_i);
+  free(hash_cells);
+  free(hash_rows);
   free(hash);
 
   /*******************************/
@@ -339,23 +336,6 @@ void main_align(void) {
   chain_break_check(naa_q, resdat_q);
   chain_break_check(naa_t, resdat_t);
 
-  /********************************/
-  /**      calloc  matrix        **/
-  /********************************/
-  mat = (float ***)calloc((size_t)(Nite_loc + 1), sizeof(float **));
-  for (i = 0; i <= Nite_loc; i++) {
-    mat[i] = (float **)calloc((size_t)(naa_q + 2), sizeof(float *));
-    for (iaa = 0; iaa <= naa_q + 1; iaa++) {
-      mat[i][iaa] = (float *)calloc((size_t)(naa_t + 2), sizeof(float));
-    }
-  }
-  score = (float **)calloc((size_t)(naa_q + 2), sizeof(float *));
-  score_r = (float **)calloc((size_t)(naa_q + 2), sizeof(float *));
-  for (iaa = 0; iaa <= naa_q + 1; iaa++) {
-    score[iaa] = (float *)calloc((size_t)(naa_t + 2), sizeof(float));
-    score_r[iaa] = (float *)calloc((size_t)(naa_t + 2), sizeof(float));
-  }
-
   /**********************************/
   /**     first alignment step     **/
   /**********************************/
@@ -370,7 +350,7 @@ void main_align(void) {
     }
     /****   alignment   ****/
     align[ialign].check = ca_alignment(naa_q, naa_t, resdat_q, resdat_t,
-                                       align[ialign], mat, score, score_r);
+                                       align[ialign]);
   }
   time_end = clock();
   if (input.progress == ON) {
@@ -416,7 +396,7 @@ void main_align(void) {
       /****   refine alignment   ****/
       superposition(naa_q, resdat_q, resdat_t, align[ialign], OFF);
       align[ialign].check = ca_alignment(naa_q, naa_t, resdat_q, resdat_t,
-                                         align[ialign], mat, score, score_r);
+                                         align[ialign]);
       /****   check alignment   ****/
       if (align[ialign].check == FALSE) {
         copy_align(naa_q, naa_t, &(align[ialign]), &align_tmp);
@@ -427,6 +407,13 @@ void main_align(void) {
         break;
       }
       if (irefine >= input.max_refine) {
+        break;
+      }
+      /* Converged: with an unchanged alignment the next superposition (and
+         thus ca_alignment) would be identical, check_align would fail and
+         the result would be reverted to the current one, so stop here. */
+      if (memcmp(align[ialign].align_q + 1, align_tmp.align_q + 1,
+                 (size_t)naa_q * sizeof(int)) == 0) {
         break;
       }
     }
@@ -549,19 +536,6 @@ void main_align(void) {
   free(align_tmp.rot);
   /**  for hash result  **/
   free(hres);
-  /**  for matrix  **/
-  for (i = 0; i <= Nite_loc; i++) {
-    for (iaa = 0; iaa <= naa_q + 1; iaa++)
-      free(mat[i][iaa]);
-    free(mat[i]);
-  }
-  free(mat);
-  for (iaa = 0; iaa <= naa_q + 1; iaa++) {
-    free(score[iaa]);
-    free(score_r[iaa]);
-  }
-  free(score);
-  free(score_r);
 
   /** for pdbdat **/
   for (ichain = 0; ichain <= pdbdat_q.nchain; ichain++) {

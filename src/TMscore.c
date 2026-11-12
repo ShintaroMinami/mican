@@ -16,12 +16,8 @@ float TMscore(int naa0, int naa1, RESDAT *resdat1, RESDAT *resdat2, ALIGN align)
   /*******************/
   /**     calloc    **/
   /*******************/
-  co1 = (float **)calloc((size_t)(naln + 1), sizeof(float *));
-  co2 = (float **)calloc((size_t)(naln + 1), sizeof(float *));
-  for (ialn = 1; ialn <= naln; ialn++) {
-    co1[ialn] = (float *)calloc(3 + 1, sizeof(float));
-    co2[ialn] = (float *)calloc(3 + 1, sizeof(float));
-  }
+  co1 = calloc_coords(naln);
+  co2 = calloc_coords(naln);
 
   /***********************/
   /**   copy coordinate  **/
@@ -64,12 +60,8 @@ float TMscore(int naa0, int naa1, RESDAT *resdat1, RESDAT *resdat2, ALIGN align)
   /**************/
   /**   free   **/
   /**************/
-  for (ialn = 1; ialn <= naln; ialn++) {
-    free(co1[ialn]);
-    free(co2[ialn]);
-  }
-  free(co1);
-  free(co2);
+  free_coords(co1);
+  free_coords(co2);
 
   return (TMscore);
 }

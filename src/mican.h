@@ -323,9 +323,10 @@ int hres2trans(SSEDAT *ssedat_q, SSEDAT *ssedat_t, ALIGN align);
 
 /**  Alignment  **/
 int ca_alignment(int naa_q, int naa_t, RESDAT *resdat_q, RESDAT *resdat_t,
-                 ALIGN align, float ***mat, float **score, float **score_r);
-void global_alignment(int naa1, int naa2, float ***mat, int *align, int *segmode,
-                      float **score, float **score_r, RESDAT *resdat_q,
+                 ALIGN align);
+void global_alignment(int naa1, int naa2, int ncons, const int *ci,
+                      const int *cj, const float *cv, const float *d0,
+                      int *align, int *segmode, RESDAT *resdat_q,
                       RESDAT *resdat_t);
 void extend_termini(int naa1, int naa2, ALIGN align, float **co1, float **co2);
 int superposition(int naa_q, RESDAT *resdat_q, RESDAT *resdat_t, ALIGN align, int sw);
@@ -373,6 +374,17 @@ void wbstft(int n, RESDAT *resdat1, RESDAT *resdat2, float *vec, float **rot, fl
 int svd(int m, int n, int withu, int withv, double eps, double tol, double *a,
         double *q, double *u, double *v, double *vt);
 float angle(float *a1, float *a2, float *a3, float *b1, float *b2, float *b3);
-float distance_2(float *a, float *b);
+/**  function : distance^2 (inline: called for every residue pair)  **/
+static inline float distance_2(const float *a, const float *b) {
+  float sum = 0.0;
+
+  sum = (a[1] - b[1]) * (a[1] - b[1])
+    + (a[2] - b[2]) * (a[2] - b[2])
+    + (a[3] - b[3]) * (a[3] - b[3]);
+
+  return (sum);
+}
+float **calloc_coords(int n);
+void free_coords(float **co);
 
 #endif

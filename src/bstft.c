@@ -21,12 +21,8 @@ void bstft(int naa, RESDAT *resdat1, RESDAT *resdat2, float *vec, float **rot) {
   /*********************/
   /*      calloc       */
   /*********************/
-  co1 = (float **)calloc((size_t)(naa + 1), sizeof(float *));
-  co2 = (float **)calloc((size_t)(naa + 1), sizeof(float *));
-  for (iaa = 0; iaa <= naa; iaa++) {
-    co1[iaa] = (float *)calloc((size_t)(3 + 1), sizeof(float));
-    co2[iaa] = (float *)calloc((size_t)(3 + 1), sizeof(float));
-  }
+  co1 = calloc_coords(naa);
+  co2 = calloc_coords(naa);
 
   xc1 = (float *)calloc((size_t)(naa + 1), sizeof(float));
   xc2 = (float *)calloc((size_t)(naa + 1), sizeof(float));
@@ -144,12 +140,8 @@ void bstft(int naa, RESDAT *resdat1, RESDAT *resdat2, float *vec, float **rot) {
   /******************/
   /*      free      */
   /******************/
-  for (iaa = 0; iaa <= naa; iaa++) {
-    free(co1[iaa]);
-    free(co2[iaa]);
-  }
-  free(co1);
-  free(co2);
+  free_coords(co1);
+  free_coords(co2);
   free(xc1);
   free(xc2);
   free(sign);
@@ -180,12 +172,8 @@ void wbstft(int naa, RESDAT *resdat1, RESDAT *resdat2, float *vec, float **rot, 
   /*********************/
   /*      calloc       */
   /*********************/
-  co1 = (float **)calloc((size_t)(naa+1), sizeof(float *));
-  co2 = (float **)calloc((size_t)(naa+1), sizeof(float *));
-  for(iaa=0; iaa<=naa; iaa++){
-    co1[iaa] = (float *)calloc((size_t)(3+1), sizeof(float));
-    co2[iaa] = (float *)calloc((size_t)(3+1), sizeof(float));
-  }
+  co1 = calloc_coords(naa);
+  co2 = calloc_coords(naa);
 
   xc1  = (float *)calloc((size_t)(naa+1), sizeof(float));
   xc2  = (float *)calloc((size_t)(naa+1), sizeof(float));
@@ -300,12 +288,8 @@ void wbstft(int naa, RESDAT *resdat1, RESDAT *resdat2, float *vec, float **rot, 
   /******************/
   /*      free      */
   /******************/
-  for(iaa=0; iaa<=naa; iaa++){
-    free(co1[iaa]);
-    free(co2[iaa]);
-  }
-  free(co1);
-  free(co2);
+  free_coords(co1);
+  free_coords(co2);
   free(xc1);
   free(xc2);
   free(sign);

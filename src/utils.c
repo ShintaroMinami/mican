@@ -1,16 +1,28 @@
 #include "mican.h"
 
-/**  function : distance^2  **/
-float distance_2(float *a, float *b) {
-
-  float sum = 0.0;
-
-  sum = (a[1] - b[1]) * (a[1] - b[1])
-    + (a[2] - b[2]) * (a[2] - b[2])
-    + (a[3] - b[3]) * (a[3] - b[3]);
-
-  return (sum);
+/**  function : zeroed (n+1) x (3+1) coordinate matrix in one block  **/
+/* Usage: float **co = calloc_coords(n); co[i][1..3] ...; free_coords(co); */
+float **calloc_coords(int n) {
+  int i;
+  float **co = (float **)malloc((size_t)(n + 1) * sizeof(float *));
+  float *mem = (float *)calloc((size_t)(n + 1) * 4, sizeof(float));
+  if (co == NULL || mem == NULL) {
+    fprintf(stderr, "!! Error   : memory allocation failed\n");
+    exit(1);
+  }
+  for (i = 0; i <= n; i++) {
+    co[i] = mem + 4 * i;
+  }
+  return (co);
 }
+
+void free_coords(float **co) {
+  if (co != NULL) {
+    free(co[0]);
+    free(co);
+  }
+}
+
 
 /** function : angle **/
 float angle(float *a1, float *a2, float *a3, float *b1, float *b2, float *b3) {
