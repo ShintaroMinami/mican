@@ -84,3 +84,5 @@ typedef short BOOL;
 
 /************************************************************************/
 void padterm(char *string, int length);
+int scan_float(const char *s, float *out);
+int scan_int(const char *s, int *out);

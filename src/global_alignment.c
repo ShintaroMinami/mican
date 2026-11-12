@@ -3,144 +3,183 @@
 
 #define USED -1000.0
 #define ALIGNED -2000.0
+#define NOT_SET -100.0f
 
-PRIVATE void check_close(int naa1, int naa2, int *ncons, int **id_iaa,
-                         float **mat, int mode);
-PRIVATE void takeover_mat(float **mat1, float **mat2, int ncons, int **id_iaa);
-PRIVATE void loc_ali_iterate(int naa1, int naa2, float **mat, float **score,
-                             float **score_r, float **length, float **length_r,
-			     int *align, int *segmode, int ncons, int **fw_iaa, int **rv_iaa,
-			     RESDAT *resdat_q, RESDAT *resdat_t);
+/*
+ * Sparse implementation of the greedy local-segment alignment.
+ *
+ * Only "contact" cells (pairs whose loosest-level matrix value mat[Nite_loc]
+ * is positive) can ever hold a positive value, so the dense (naa1 x naa2)
+ * matrices of the original implementation are replaced by arrays indexed by
+ * contact index c.  Contacts are given in forward order (iaa ascending, then
+ * jaa ascending).  Every operation of the dense version is reproduced on the
+ * contact cells in the same order, so results are bit-identical:
+ *   - a non-contact cell always holds a value <= 0 and score/length 0, hence
+ *     a missing diagonal predecessor points to a sentinel slot (index ncons)
+ *     whose value is NOT_SET and whose score/length stay 0;
+ *   - USED sweeps over a row/column only need to touch contact cells.
+ *
+ * Example: contacts (1,1) (1,2) (2,2) (2,3) give row_start = {_,0,2,4},
+ *          fw_pred = {4,4,0,1} (4 = sentinel), rv_order = {1,0,3,2}.
+ */
 
-void global_alignment(int naa1, int naa2, float ***mat, int *align, int *segmode,
-                      float **score, float **score_r, RESDAT *resdat_q,
+typedef struct {
+  int ncons;
+  const int *ci, *cj;  /* residue indices of contact c */
+  const float *cv;     /* raw matrix value of contact c */
+  int *row_start;      /* contacts of row i: [row_start[i], row_start[i+1]) */
+  int *col_start;      /* contacts of column j: col_list[col_start[j] ..] */
+  int *col_list;
+  int *fw_pred;        /* contact index of (i-1, j-1), or ncons (sentinel) */
+  int *rv_pred;        /* contact index of (i-1, j+1), or ncons (sentinel) */
+  int *rv_order;       /* contacts in reverse order (i asc, j desc) */
+  float *m0;           /* working matrix value */
+  float *score, *score_r, *length, *length_r;
+} CONTACTS;
+
+PRIVATE void loc_ali_iterate(int naa1, int naa2, CONTACTS *cs, int *align,
+                             int *segmode, RESDAT *resdat_q, RESDAT *resdat_t);
+
+/* Grow a buffer to hold at least n elements of size sz. */
+PRIVATE void *grow(void *p, int *cap, int n, size_t sz) {
+  if (n <= *cap) {
+    return p;
+  }
+  *cap = n + n / 2 + 16;
+  p = realloc(p, (size_t)(*cap) * sz);
+  if (p == NULL) {
+    fprintf(stderr, "!! Error   : memory allocation failed\n");
+    exit(1);
+  }
+  return p;
+}
+
+void global_alignment(int naa1, int naa2, int ncons, const int *ci,
+                      const int *cj, const float *cv, const float *d0,
+                      int *align, int *segmode, RESDAT *resdat_q,
                       RESDAT *resdat_t) {
-  int i;
-  int iaa, jaa;
-  int icons, ncons;
-  int **fw_iaa, **rv_iaa;
-  float **length, **length_r;
+  /* Work buffers are reused across calls. */
+  static int *row_start, *col_start, *col_list, *fw_pred, *rv_pred, *rv_order;
+  static int *prev_row;
+  static float *buf;
+  static int cap_row, cap_col, cap_prev, cap_cl, cap_fp, cap_rp, cap_ro, cap_buf;
+  CONTACTS cs;
+  int c, k, j, iaa, ite;
 
-  fw_iaa = (int **)calloc(2, sizeof(int *));
-  rv_iaa = (int **)calloc(2, sizeof(int *));
-  for (i = 0; i <= 1; i++) {
-    fw_iaa[i] = (int *)calloc((size_t)(naa1 * naa2 + 1), sizeof(int));
-    rv_iaa[i] = (int *)calloc((size_t)(naa1 * naa2 + 1), sizeof(int));
-  }
-  length = (float **)calloc((size_t)(naa1 + 2), sizeof(float *));
-  length_r = (float **)calloc((size_t)(naa1 + 2), sizeof(float *));
-  for(iaa = 0; iaa <= naa1 + 1; iaa++){
-    length[iaa] = (float *)calloc((size_t)(naa2 + 2), sizeof(float));
-    length_r[iaa] = (float *)calloc((size_t)(naa2 + 2), sizeof(float));
+  row_start = grow(row_start, &cap_row, naa1 + 2, sizeof(int));
+  col_start = grow(col_start, &cap_col, naa2 + 3, sizeof(int));
+  prev_row = grow(prev_row, &cap_prev, naa2 + 2, sizeof(int));
+  col_list = grow(col_list, &cap_cl, ncons + 1, sizeof(int));
+  fw_pred = grow(fw_pred, &cap_fp, ncons + 1, sizeof(int));
+  rv_pred = grow(rv_pred, &cap_rp, ncons + 1, sizeof(int));
+  rv_order = grow(rv_order, &cap_ro, ncons + 1, sizeof(int));
+  buf = grow(buf, &cap_buf, 5 * (ncons + 1), sizeof(float));
+
+  cs.ncons = ncons;
+  cs.ci = ci;
+  cs.cj = cj;
+  cs.cv = cv;
+  cs.row_start = row_start;
+  cs.col_start = col_start;
+  cs.col_list = col_list;
+  cs.fw_pred = fw_pred;
+  cs.rv_pred = rv_pred;
+  cs.rv_order = rv_order;
+  cs.m0 = buf;
+  cs.score = buf + (ncons + 1);
+  cs.score_r = buf + 2 * (ncons + 1);
+  cs.length = buf + 3 * (ncons + 1);
+  cs.length_r = buf + 4 * (ncons + 1);
+
+  /**  row ranges  **/
+  c = 0;
+  for (iaa = 0; iaa <= naa1 + 1; iaa++) {
+    while (c < ncons && ci[c] < iaa) {
+      c++;
+    }
+    row_start[iaa] = c;
   }
 
-  /**  check close atom  **/
-  check_close(naa1, naa2, &ncons, fw_iaa, mat[Nite_loc], FORWARD);
-  check_close(naa1, naa2, &ncons, rv_iaa, mat[Nite_loc], REVERSE);
-
-  /**********************************/
-  /**         initialize           **/
-  /**********************************/
-  for (icons = 1; icons <= ncons; icons++) {
-    iaa = fw_iaa[0][icons];
-    jaa = fw_iaa[1][icons];
-    score[iaa][jaa] = 0;
-    score_r[iaa][jaa] = 0;
-    length[iaa][jaa] = 0;
-    length_r[iaa][jaa] = 0;
+  /**  column lists  **/
+  for (j = 0; j <= naa2 + 2; j++) {
+    col_start[j] = 0;
   }
+  for (c = 0; c < ncons; c++) {
+    col_start[cj[c] + 1]++;
+  }
+  for (j = 1; j <= naa2 + 2; j++) {
+    col_start[j] += col_start[j - 1];
+  }
+  for (c = 0; c < ncons; c++) {
+    col_list[col_start[cj[c]]++] = c;
+  }
+  for (j = naa2 + 2; j >= 1; j--) {
+    col_start[j] = col_start[j - 1];
+  }
+  col_start[0] = 0;
+
+  /**  diagonal predecessors & reverse order  **/
+  for (j = 0; j <= naa2 + 1; j++) {
+    prev_row[j] = ncons;
+  }
+  k = 0;
+  for (iaa = 1; iaa <= naa1; iaa++) {
+    for (c = row_start[iaa]; c < row_start[iaa + 1]; c++) {
+      fw_pred[c] = prev_row[cj[c] - 1];
+      rv_pred[c] = prev_row[cj[c] + 1];
+    }
+    for (c = row_start[iaa - 1]; c < row_start[iaa]; c++) {
+      prev_row[cj[c]] = ncons;
+    }
+    for (c = row_start[iaa]; c < row_start[iaa + 1]; c++) {
+      prev_row[cj[c]] = c;
+    }
+    for (c = row_start[iaa + 1] - 1; c >= row_start[iaa]; c--) {
+      rv_order[k++] = c;
+    }
+  }
+  for (c = row_start[naa1]; c < row_start[naa1 + 1]; c++) {
+    prev_row[cj[c]] = ncons;
+  }
+
+  /**  initialize (c == ncons is the sentinel)  **/
+  for (c = 0; c <= ncons; c++) {
+    cs.m0[c] = NOT_SET;
+  }
+  cs.score[ncons] = cs.score_r[ncons] = 0;
+  cs.length[ncons] = cs.length_r[ncons] = 0;
 
   /**************************/
   /**      alignment       **/
   /**************************/
-  for (i = 1; i <= Nite_loc; i++) {
-    /**  recalc mat  **/
-    takeover_mat(mat[0], mat[i], ncons, fw_iaa);
+  for (ite = 1; ite <= Nite_loc; ite++) {
+    /**  recalc mat (take over level-ite values)  **/
+    for (c = 0; c < ncons; c++) {
+      if (cs.m0[c] == USED) {
+        continue;
+      }
+      cs.m0[c] = (cv[c] >= d0[ite]) ? cv[c] : NOT_SET;
+    }
     /**  get segments  **/
-    loc_ali_iterate(naa1, naa2, mat[0], score, score_r, length, length_r,
-		    align, segmode, ncons, fw_iaa, rv_iaa, resdat_q, resdat_t);
+    loc_ali_iterate(naa1, naa2, &cs, align, segmode, resdat_q, resdat_t);
   }
-
-  /**********************/
-  /**       free       **/
-  /**********************/
-  for (i = 0; i <= 1; i++) {
-    free(fw_iaa[i]);
-    free(rv_iaa[i]);
-  }
-  free(fw_iaa);
-  free(rv_iaa);
-
-  for(iaa = 0; iaa <= naa1 + 1; iaa++){
-    free(length[iaa]);
-    free(length_r[iaa]);
-  }
-  free(length);
-  free(length_r);
-
   return;
 } /* end of function */
 
-/**  function : takeover matrix  **/
-PRIVATE void takeover_mat(float **mat1, float **mat2, int ncons, int **id_iaa) {
-  int icons, iaa, jaa;
-  for (icons = 1; icons <= ncons; icons++) {
-    iaa = id_iaa[0][icons];
-    jaa = id_iaa[1][icons];
-    if (mat1[iaa][jaa] == USED) {
-      continue;
-    }
-    mat1[iaa][jaa] = mat2[iaa][jaa];
-  }
-  return;
-}
+PRIVATE void get_alignment(CONTACTS *cs, int c, int *align, int *segmode,
+                           int mode);
+PRIVATE void recalc_mat(CONTACTS *cs, int c, int mode);
+PRIVATE void recalc_mat_seq(int naa1, int naa2, CONTACTS *cs, int c,
+                            RESDAT *resdat_q, RESDAT *resdat_t);
+PRIVATE void calc_score(CONTACTS *cs, float *score, float *length, int *c_max,
+                        int mode);
 
-/**  check close pair a.a.  **/
-PRIVATE void check_close(int naa1, int naa2, int *ncons, int **id_iaa,
-                         float **mat, int mode) {
-  int iaa, jaa;
+/* score/length of contact c; c == -1 stands for the (0,0) cell (always 0) */
+#define SC(arr, c) ((c) >= 0 ? (arr)[c] : 0.0f)
 
-  *ncons = 0;
-  if (mode == FORWARD) {
-    for (iaa = 1; iaa <= naa1; iaa++) {
-      for (jaa = 1; jaa <= naa2; jaa++) {
-        if (mat[iaa][jaa] > 0) {
-          *ncons = *ncons + 1;
-          id_iaa[0][*ncons] = iaa;
-          id_iaa[1][*ncons] = jaa;
-        }
-      }
-    }
-  } else {
-    for (iaa = 1; iaa <= naa1; iaa++) {
-      for (jaa = naa2; jaa >= 1; jaa--) {
-        if (mat[iaa][jaa] > 0) {
-          *ncons = *ncons + 1;
-          id_iaa[0][*ncons] = iaa;
-          id_iaa[1][*ncons] = jaa;
-        }
-      }
-    }
-  }
-
-  return;
-}
-
-PRIVATE void get_alignment(int iaa, int jaa, float **mat, int *align, int *segmode, int mode);
-PRIVATE void recalc_mat(int naa1, int naa2, float **mat, int iaa_max,
-                        int jaa_max, int mode);
-PRIVATE void recalc_mat_seq(int naa1, int naa2, float **mat, int iaa_max,
-                            int jaa_max, RESDAT *resdat_q, RESDAT *resdat_t,
-                            int mode);
-PRIVATE void calc_score(int ncons, float **score, float **length, float **mat,
-			int **id_iaa, int *iaa_max, int *jaa_max, int mode);
-
-PRIVATE void loc_ali_iterate(int naa1, int naa2, float **mat, float **score,
-                             float **score_r, float **length, float **length_r,
-			     int *align, int *segmode, int ncons, int **fw_iaa, int **rv_iaa,
-			     RESDAT *resdat_q, RESDAT *resdat_t) {
-  int iaa_max, jaa_max;
-  int iaa_max_r, jaa_max_r;
+PRIVATE void loc_ali_iterate(int naa1, int naa2, CONTACTS *cs, int *align,
+                             int *segmode, RESDAT *resdat_q, RESDAT *resdat_t) {
+  int c_max, c_max_r;
   int mode;
   float score_max, score_max_r;
   float length_max, length_max_r;
@@ -148,62 +187,59 @@ PRIVATE void loc_ali_iterate(int naa1, int naa2, float **mat, float **score,
 
   cutoff = input.smin;
 
-  iaa_max = 0;
-  jaa_max = 0;
-  iaa_max_r = 0;
-  jaa_max_r = 0;
+  c_max = -1;
+  c_max_r = -1;
 
   /*********************************/
   /**    find local alignment     **/
   /*********************************/
   /**  calc score  **/
   if (input.mode == FWandRV || input.mode == SEQUENT || input.mode == FORWARD) {
-    calc_score(ncons, score, length, mat, fw_iaa, &iaa_max, &jaa_max, FORWARD);
+    calc_score(cs, cs->score, cs->length, &c_max, FORWARD);
   }
   if (input.mode == FWandRV || input.mode == REVERSE) {
-    calc_score(ncons, score_r, length_r, mat, rv_iaa, &iaa_max_r, &jaa_max_r, REVERSE);
+    calc_score(cs, cs->score_r, cs->length_r, &c_max_r, REVERSE);
   }
 
   if (input.mode == FORWARD) {
     /**  forward only mode  **/
-    score_max = score[iaa_max][jaa_max];
-    length_max = length[iaa_max][jaa_max];
+    score_max = SC(cs->score, c_max);
+    length_max = SC(cs->length, c_max);
     while (score_max >= cutoff && length_max >= input.lmin) {
-      get_alignment(iaa_max, jaa_max, mat, align, segmode, FORWARD);
-      recalc_mat(naa1, naa2, mat, iaa_max, jaa_max, FORWARD);
-      calc_score(ncons, score, length, mat, fw_iaa, &iaa_max, &jaa_max, FORWARD);
-      score_max = score[iaa_max][jaa_max];
-      length_max = length[iaa_max][jaa_max];
+      get_alignment(cs, c_max, align, segmode, FORWARD);
+      recalc_mat(cs, c_max, FORWARD);
+      calc_score(cs, cs->score, cs->length, &c_max, FORWARD);
+      score_max = SC(cs->score, c_max);
+      length_max = SC(cs->length, c_max);
     }
   } else if (input.mode == SEQUENT) {
-    score_max = score[iaa_max][jaa_max];
-    length_max = length[iaa_max][jaa_max];
+    score_max = SC(cs->score, c_max);
+    length_max = SC(cs->length, c_max);
     while (score_max >= cutoff && length_max >= input.lmin) {
-      get_alignment(iaa_max, jaa_max, mat, align, segmode, FORWARD);
-      recalc_mat_seq(naa1, naa2, mat, iaa_max, jaa_max, resdat_q, resdat_t,
-                     FORWARD);
-      calc_score(ncons, score, length, mat, fw_iaa, &iaa_max, &jaa_max, FORWARD);
-      score_max = score[iaa_max][jaa_max];
-      length_max = length[iaa_max][jaa_max];
+      get_alignment(cs, c_max, align, segmode, FORWARD);
+      recalc_mat_seq(naa1, naa2, cs, c_max, resdat_q, resdat_t);
+      calc_score(cs, cs->score, cs->length, &c_max, FORWARD);
+      score_max = SC(cs->score, c_max);
+      length_max = SC(cs->length, c_max);
     }
   } else if (input.mode == REVERSE) {
     /**  reverse only mode  **/
-    score_max = score_r[iaa_max_r][jaa_max_r];
-    length_max = length_r[iaa_max_r][jaa_max_r];
+    score_max = SC(cs->score_r, c_max_r);
+    length_max = SC(cs->length_r, c_max_r);
     while (score_max >= cutoff && length_max >= input.lmin) {
-      get_alignment(iaa_max_r, jaa_max_r, mat, align, segmode, REVERSE);
-      recalc_mat(naa1, naa2, mat, iaa_max_r, jaa_max_r, REVERSE);
-      calc_score(ncons, score_r, length_r, mat, rv_iaa, &iaa_max_r, &jaa_max_r, REVERSE);
-      score_max = score_r[iaa_max_r][jaa_max_r];
-      length_max = length_r[iaa_max_r][jaa_max_r];
+      get_alignment(cs, c_max_r, align, segmode, REVERSE);
+      recalc_mat(cs, c_max_r, REVERSE);
+      calc_score(cs, cs->score_r, cs->length_r, &c_max_r, REVERSE);
+      score_max = SC(cs->score_r, c_max_r);
+      length_max = SC(cs->length_r, c_max_r);
     }
 
   } else {
     /**  forward & reverse mode  **/
-    score_max = score[iaa_max][jaa_max];
-    score_max_r = score_r[iaa_max_r][jaa_max_r];
-    length_max = length[iaa_max][jaa_max];
-    length_max_r = length_r[iaa_max_r][jaa_max_r];
+    score_max = SC(cs->score, c_max);
+    score_max_r = SC(cs->score_r, c_max_r);
+    length_max = SC(cs->length, c_max);
+    length_max_r = SC(cs->length_r, c_max_r);
     mode = FORWARD;
     if (score_max < score_max_r) {
       mode = REVERSE;
@@ -212,23 +248,23 @@ PRIVATE void loc_ali_iterate(int naa1, int naa2, float **mat, float **score,
     }
     while (score_max >= cutoff && length_max >= input.lmin) {
       if (mode == FORWARD) {
-        get_alignment(iaa_max, jaa_max, mat, align, segmode, FORWARD);
-        recalc_mat(naa1, naa2, mat, iaa_max, jaa_max, FORWARD);
+        get_alignment(cs, c_max, align, segmode, FORWARD);
+        recalc_mat(cs, c_max, FORWARD);
       } else {
-        get_alignment(iaa_max_r, jaa_max_r, mat, align, segmode, REVERSE);
-        recalc_mat(naa1, naa2, mat, iaa_max_r, jaa_max_r, REVERSE);
+        get_alignment(cs, c_max_r, align, segmode, REVERSE);
+        recalc_mat(cs, c_max_r, REVERSE);
       }
-      calc_score(ncons, score, length, mat, fw_iaa, &iaa_max, &jaa_max, FORWARD);
-      calc_score(ncons, score_r, length_r, mat, rv_iaa, &iaa_max_r, &jaa_max_r, REVERSE);
-      score_max = score[iaa_max][jaa_max];
-      score_max_r = score_r[iaa_max_r][jaa_max_r];
-      length_max = length[iaa_max][jaa_max];
-      length_max_r = length_r[iaa_max_r][jaa_max_r];
+      calc_score(cs, cs->score, cs->length, &c_max, FORWARD);
+      calc_score(cs, cs->score_r, cs->length_r, &c_max_r, REVERSE);
+      score_max = SC(cs->score, c_max);
+      score_max_r = SC(cs->score_r, c_max_r);
+      length_max = SC(cs->length, c_max);
+      length_max_r = SC(cs->length_r, c_max_r);
       mode = FORWARD;
       if (score_max < score_max_r) {
         mode = REVERSE;
         score_max = score_max_r;
-	length_max = length_max_r;
+        length_max = length_max_r;
       }
     }
   }
@@ -237,35 +273,42 @@ PRIVATE void loc_ali_iterate(int naa1, int naa2, float **mat, float **score,
 }
 
 /**  function : calc_score  **/
-PRIVATE void calc_score(int ncons, float **score, float **length, float **mat,
-			int **id_iaa, int *iaa_max, int *jaa_max, int mode) {
-  int icons;
-  int iaa, jaa;
+/* Keeps the previous *c_max when no cell exceeds 0 (as the dense version). */
+#define CALC_SCORE_CELL(c)                                \
+  do {                                                    \
+    if (m0[c] < 0) {                                      \
+      score[c] = 0;                                       \
+      length[c] = 0;                                      \
+      break;                                              \
+    }                                                     \
+    p = pred[c];                                          \
+    score[c] = score[p] + m0[c];                          \
+    length[c] = length[p] + 1;                            \
+    if (score[c] > max_score && length[c] >= lmin) {      \
+      max_score = score[c];                               \
+      *c_max = c;                                         \
+    }                                                     \
+  } while (0)
+
+PRIVATE void calc_score(CONTACTS *cs, float *score, float *length, int *c_max,
+                        int mode) {
+  int k, c, p;
+  int ncons = cs->ncons;
+  const int *pred = (mode == FORWARD) ? cs->fw_pred : cs->rv_pred;
+  const int *order = cs->rv_order;
+  const float *m0 = cs->m0;
+  float lmin = input.lmin;
   float max_score;
 
   max_score = 0;
-  for (icons = 1; icons <= ncons; icons++) {
-    iaa = id_iaa[0][icons];
-    jaa = id_iaa[1][icons];
-    if (mat[iaa][jaa] < 0) {
-      score[iaa][jaa] = 0;
-      length[iaa][jaa] = 0;
-      continue;
+  if (mode == FORWARD) {
+    for (c = 0; c < ncons; c++) {
+      CALC_SCORE_CELL(c);
     }
-
-    if (mode == FORWARD) {
-      score[iaa][jaa] = score[iaa - 1][jaa - 1] + mat[iaa][jaa];
-      length[iaa][jaa] = length[iaa - 1][jaa - 1] + 1;
-    }
-    if (mode == REVERSE) {
-      score[iaa][jaa] = score[iaa - 1][jaa + 1] + mat[iaa][jaa];
-      length[iaa][jaa] = length[iaa - 1][jaa + 1] + 1;
-    }
-
-    if (score[iaa][jaa] > max_score && length[iaa][jaa] >= input.lmin) {
-      max_score = score[iaa][jaa];
-      *iaa_max = iaa;
-      *jaa_max = jaa;
+  } else {
+    for (k = 0; k < ncons; k++) {
+      c = order[k];
+      CALC_SCORE_CELL(c);
     }
   }
 
@@ -273,89 +316,80 @@ PRIVATE void calc_score(int ncons, float **score, float **length, float **mat,
 }
 
 /**  function : get alignment  **/
-PRIVATE void get_alignment(int iaa, int jaa, float **mat, int *align, int *segmode,
+PRIVATE void get_alignment(CONTACTS *cs, int c, int *align, int *segmode,
                            int mode) {
-  float sc;
+  const int *pred = (mode == FORWARD) ? cs->fw_pred : cs->rv_pred;
 
-  sc = mat[iaa][jaa];
-  while (sc > 0) {
-    align[iaa] = jaa;
-    if (mode == FORWARD) {
-      segmode[iaa] = FORWARD;
-      jaa--;
-    } else {
-      segmode[iaa] = REVERSE;
-      jaa++;
-    }
-    iaa--;
-    sc = mat[iaa][jaa];
+  while (c >= 0 && cs->m0[c] > 0) {
+    align[cs->ci[c]] = cs->cj[c];
+    segmode[cs->ci[c]] = (mode == FORWARD) ? FORWARD : REVERSE;
+    c = pred[c];
   }
   return;
+}
+
+/* Mark every contact in row iaa and column jaa as USED. */
+PRIVATE void sweep_row_col(CONTACTS *cs, int iaa, int jaa) {
+  int k;
+  for (k = cs->col_start[jaa]; k < cs->col_start[jaa + 1]; k++) {
+    cs->m0[cs->col_list[k]] = USED;
+  }
+  for (k = cs->row_start[iaa]; k < cs->row_start[iaa + 1]; k++) {
+    cs->m0[k] = USED;
+  }
 }
 
 /**  function : recalc matrix  **/
-PRIVATE void recalc_mat(int naa1, int naa2, float **mat, int iaa_max,
-                        int jaa_max, int mode) {
-  int iaa, jaa;
-  int i, j;
-  float sc;
+PRIVATE void recalc_mat(CONTACTS *cs, int c, int mode) {
+  const int *pred = (mode == FORWARD) ? cs->fw_pred : cs->rv_pred;
 
-  iaa = iaa_max;
-  jaa = jaa_max;
-  sc = mat[iaa][jaa];
-  while (sc > 0) {
-    for (i = 1; i <= naa1; i++) {
-      mat[i][jaa] = USED;
-    }
-    for (j = 1; j <= naa2; j++) {
-      mat[iaa][j] = USED;
-    }
-    mat[iaa][jaa] = ALIGNED;
-    iaa--;
-    if (mode == FORWARD) {
-      jaa--;
-    } else {
-      jaa++;
-    }
-    sc = mat[iaa][jaa];
+  while (c >= 0 && cs->m0[c] > 0) {
+    sweep_row_col(cs, cs->ci[c], cs->cj[c]);
+    cs->m0[c] = ALIGNED;
+    c = pred[c];
   }
   return;
 }
 
-PRIVATE void recalc_mat_seq(int naa1, int naa2, float **mat, int iaa_max,
-                            int jaa_max, RESDAT *resdat_q, RESDAT *resdat_t,
-                            int mode) {
+/* Mark contacts in rows [r0, r1] and columns [j0, j1] whose chain pair is
+   (chainID_q, chainID_t) as USED. */
+PRIVATE void block_used(CONTACTS *cs, int r0, int r1, int j0, int j1,
+                        int chainID_q, int chainID_t, RESDAT *resdat_q,
+                        RESDAT *resdat_t) {
+  int c, j;
+  for (c = cs->row_start[r0]; c < cs->row_start[r1 + 1]; c++) {
+    j = cs->cj[c];
+    if (j < j0 || j > j1 || cs->m0[c] == USED) {
+      continue;
+    }
+    if (chainID_q == resdat_q[cs->ci[c]].chainID &&
+        chainID_t == resdat_t[j].chainID) {
+      cs->m0[c] = USED;
+    }
+  }
+}
+
+PRIVATE void recalc_mat_seq(int naa1, int naa2, CONTACTS *cs, int c,
+                            RESDAT *resdat_q, RESDAT *resdat_t) {
   int iaa, jaa;
-  int i, j;
-  float sc;
+  int iaa_max, jaa_max;
   int iaa_min, jaa_min;
   int chainID_q;
   int chainID_t;
   int tempID_q;
   int tempID_t;
 
-  iaa = iaa_max;
-  jaa = jaa_max;
-  sc = mat[iaa][jaa];
-  while (sc >= 0) {
-    for (i = 1; i <= naa1; i++) {
-      mat[i][jaa] = USED;
-    }
-    for (j = 1; j <= naa2; j++) {
-      mat[iaa][j] = USED;
-    }
-    mat[iaa][jaa] = ALIGNED;
-    iaa--;
-    if (mode == FORWARD) {
-      jaa--;
-    } else {
-      jaa++;
-    }
-    sc = mat[iaa][jaa];
+  iaa_max = (c >= 0) ? cs->ci[c] : 0;
+  jaa_max = (c >= 0) ? cs->cj[c] : 0;
+  iaa_min = iaa_max + 1;
+  jaa_min = jaa_max + 1;
+  while (c >= 0 && cs->m0[c] >= 0) {
+    iaa_min = cs->ci[c];
+    jaa_min = cs->cj[c];
+    sweep_row_col(cs, iaa_min, jaa_min);
+    cs->m0[c] = ALIGNED;
+    c = cs->fw_pred[c];
   }
-
-  iaa_min = iaa + 1;
-  jaa_min = jaa + 1;
 
   jaa = jaa_min;
   tempID_q = 0;
@@ -366,26 +400,10 @@ PRIVATE void recalc_mat_seq(int naa1, int naa2, float **mat, int iaa_max,
     chainID_q = resdat_q[iaa].chainID;
     chainID_t = resdat_t[jaa].chainID;
     if (tempID_q != chainID_q || tempID_t != chainID_t) {
-      for (i = 1; i <= iaa_min; i++) {
-        for (j = jaa_max; j <= naa2; j++) {
-          if (mat[i][j] != USED) {
-            if (chainID_q == resdat_q[i].chainID &&
-                chainID_t == resdat_t[j].chainID) {
-              mat[i][j] = USED;
-            }
-          }
-        }
-      }
-      for (i = iaa_max; i <= naa1; i++) {
-        for (j = 1; j <= jaa_min; j++) {
-          if (mat[i][j] != USED) {
-            if (chainID_q == resdat_q[i].chainID &&
-                chainID_t == resdat_t[j].chainID) {
-              mat[i][j] = USED;
-            }
-          }
-        }
-      }
+      block_used(cs, 1, iaa_min, jaa_max, naa2, chainID_q, chainID_t,
+                 resdat_q, resdat_t);
+      block_used(cs, iaa_max, naa1, 1, jaa_min, chainID_q, chainID_t,
+                 resdat_q, resdat_t);
       tempID_q = chainID_q;
       tempID_t = chainID_t;
     }

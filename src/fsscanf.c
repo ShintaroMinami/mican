@@ -147,6 +147,37 @@
             zero or blank before the EOF return.
 */
 
+/* Fast equivalents of sscanf(s, "%f") / sscanf(s, "%d") for one field.
+   Return -1 for an empty/blank field, 0 if no number could be parsed (output
+   left untouched), 1 on success; strtof() rounds exactly like "%f". */
+int scan_float(const char *s, float *out) {
+  char *end;
+  float v;
+  while (isspace((unsigned char)*s))
+    s++;
+  if (!*s)
+    return (-1);
+  v = strtof(s, &end);
+  if (end == s)
+    return (0);
+  *out = v;
+  return (1);
+}
+
+int scan_int(const char *s, int *out) {
+  char *end;
+  long v;
+  while (isspace((unsigned char)*s))
+    s++;
+  if (!*s)
+    return (-1);
+  v = strtol(s, &end, 10);
+  if (end == s)
+    return (0);
+  *out = (int)v;
+  return (1);
+}
+
 int fsscanf(char *buffer, char *format, ...) {
   va_list ap;
   char *FormStart, *BuffStart, *stop,
@@ -250,7 +281,7 @@ int fsscanf(char *buffer, char *format, ...) {
           *DblPtr = (double)0.0;
       } else {
         FloatPtr = va_arg(ap, float *);
-        if (sscanf(value, "%f", FloatPtr) == (-1))
+        if (scan_float(value, FloatPtr) == (-1))
           *FloatPtr = (float)0.0;
       }
 
@@ -262,7 +293,7 @@ int fsscanf(char *buffer, char *format, ...) {
           *LongPtr = 0L;
       } else {
         IntPtr = va_arg(ap, int *);
-        if (sscanf(value, "%d", IntPtr) == (-1))
+        if (scan_int(value, IntPtr) == (-1))
           *IntPtr = 0;
       }
       break;
