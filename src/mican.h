@@ -207,6 +207,26 @@ typedef struct {
   float tempfactor;
 } ALLATM;
 
+/*
+ * One ATOM/HETATM record of the first model of a structure file, with the
+ * fields in PDB conventions whichever format (PDB or mmCIF) it came from.
+ * Example: PDB line "ATOM      2  CA  MET A   1      10.0..." and the mmCIF
+ * row "ATOM 2 C CA . MET A 1 1 ? 10.0 ..." both give
+ *   record "ATOM  ", serial 2, name " CA ", resName "MET", chain "A", resSeq 1.
+ */
+typedef struct {
+  char record[6 + 1];  /* "ATOM  " or "HETATM" */
+  int serial;          /* atom serial number */
+  char name[4 + 1];    /* atom name as in PDB columns 13-16 (" CA ", "FE  ") */
+  char resName[3 + 1]; /* residue name, right-justified ("ALA", " DA") */
+  char chain[4 + 1];   /* chain ID, " " if blank; only mmCIF has longer IDs
+                          (kept up to 4 characters, for messages) */
+  int resSeq;          /* residue number (author numbering) */
+  float x, y, z;
+  float occupancy;
+  float tempFactor;
+} ATOM_REC;
+
 typedef struct {
   int nchain;
   char **chainID_org;
@@ -298,6 +318,9 @@ void check_CA(char *filename, char *chainID, RESDAT *resdat);
 void read_pdb(char *filename, char *chainID, int naa, int natom, RESDAT *resdat,
               ALLATM *allatm);
 char resname2reschar(char *resname);
+/**  Read mmCIF  **/
+int is_mmcif_file(const char *filename);
+int read_mmcif_atoms(const char *filename, ATOM_REC **atoms);
 /**  Distance Matrix  **/
 void calc_distmat(int naa, RESDAT *resdat, float **distmat);
 /**  Check PDB  **/
