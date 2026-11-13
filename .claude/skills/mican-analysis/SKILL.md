@@ -1,232 +1,195 @@
 ---
 name: mican-analysis
 description: >
-  Use this skill for any protein 3D structure analysis using MICAN: alignment, TM-score,
-  RMSD, structural similarity, superposition, batch comparison, residue correspondence,
-  conformational change (apo/holo), internal symmetry detection, rotational symmetry (Cn),
-  domain detection, sub-optimal alignments, cyclic permutation, tandem repeat.
-  Trigger on phrases like "compare PDB files", "align proteins", "calculate TM-score",
-  "run MICAN", "structural similarity", "does this protein have symmetry", "analyze
-  conformational change", "show alternative alignments", or whenever PDB file paths are
-  provided. Symmetry analysis, conformational change quantification, and domain detection
-  are all within scope — trigger even when the task goes beyond simple alignment.
+  Compare protein 3D structures with MICAN (pymican): structure alignment, TM-score, RMSD,
+  Dali Z, residue-to-residue correspondence (e.g. mapping active-site residues between
+  proteins), multi-chain complexes (chain selection, chain-to-chain correspondence),
+  superposed coordinates, batch / all-vs-all comparison, and alternative (sub-optimal)
+  alignments. Handles non-sequential (rewired, circularly permuted) and reverse-direction
+  alignments, and PDB or mmCIF input. Use this skill whenever the user wants to compare,
+  align or superpose protein structures, asks how similar two structures are, wants the
+  residues of one structure that correspond to residues of another, or gives .pdb/.cif files
+  to compare — and whenever MICAN or pymican is mentioned, even if the tool is not named.
 ---
 
-# MICAN Protein Structure Analysis Skill
+# MICAN Structure Comparison
 
-MICAN compares protein 3D structures via structure alignment. This skill contains the
-workflows needed to execute each type of analysis correctly.
+MICAN aligns two protein structures and scores their similarity with TM-score and related
+measures. Unlike sequential aligners, it can also match secondary-structure segments that
+appear in a different order (circular permutations, swapped elements) or run in the opposite
+direction, and it aligns whole multi-chain complexes at once.
 
-**Code templates** are in the reference files — read them when you need exact code:
-- `references/score-guide.md` — TM-score interpretation and standard output block
-- `references/code-examples.md` — residue correspondence, batch, superposition, sub-optimal
-- `references/symmetry-analysis.md` — self-comparison, rotation matrix, cyclic permutation, domain detection
-- `references/conformational-analysis.md` — per-residue Cα displacement
+Work through **pymican** (the Python wrapper). For what pymican does not expose — MICAN's error
+messages, ranks other than the best, per-chain results, and superposed coordinate files — use
+the helpers in `scripts/mican_utils.py` (in this skill's base directory) instead of parsing
+MICAN's output yourself:
 
----
+```python
+import sys
+sys.dont_write_bytecode = True   # keep the skill directory free of __pycache__
+sys.path.insert(0, "<skill base directory>/scripts")
+from mican_utils import run_mican, brief_table, chain_summary, align_rank, write_superposed
+```
+
+Read these when needed:
+- `references/score-guide.md` — before reporting or interpreting scores (report template,
+  TM-score normalization, what seq_identity can and cannot tell you).
+- `references/code-examples.md` — code for residue correspondence, complexes, superposition,
+  batch comparison and sub-optimal alignments.
 
 ## Setup
 
-### First-time setup
+If `import pymican` fails, run `python <skill base directory>/scripts/setup_env.py`. It installs
+pymican with pip; building the MICAN binary needs a C compiler (gcc or clang).
 
-If `pymican` is not yet installed, run the bundled setup script first:
-
-```bash
-python .claude/skills/mican-analysis/scripts/setup_env.py
-```
-
-This checks for `pymican`, installs it via `pip install pymican` if missing,
-and verifies the MICAN binary. A C compiler (gcc) is required to build the binary.
-If the script reports a missing compiler, install gcc before proceeding:
-- macOS: `xcode-select --install` or `brew install gcc`
-- Ubuntu: `sudo apt install gcc`
-
-### Usage
-
-`mican` is a class. Always instantiate it first:
+## pymican basics
 
 ```python
 from pymican import mican
 m = mican()
-aln = m.align(pdb1='a.pdb', pdb2='b.pdb', options='-w')
+aln = m.align('a.pdb', 'b.cif', options='-w')   # file paths, or file contents as strings
 ```
 
-`aln` has these key attributes:
-- `TMscore`, `TMscore1`, `TMscore2` — TM-scores (normalized by min/pdb1/pdb2 length)
-- `coverage1`, `coverage2` — alignment coverage in % (0–100, **not** 0–1)
-- `rmsd`, `nalign`, `size1`, `size2`, `seq_identity`
-- `alignment` — pandas DataFrame; columns: `residue1`, `residue2` (str), `chain1`, `chain2`, `aatype1`, `aatype2`, `distance` (Cα in Å)
+| Attribute | Meaning |
+|-----------|---------|
+| `TMscore1`, `TMscore2` | TM-score normalized by the length of pdb1 / pdb2 |
+| `TMscore` | Same value as `TMscore1` (normalized by **pdb1**, not by the shorter chain) |
+| `coverage1`, `coverage2` | % of pdb1 / pdb2 residues aligned (0–100, not 0–1) |
+| `rmsd`, `nalign` | Cα RMSD (Å) over the `nalign` aligned residues |
+| `size1`, `size2` | Number of residues (Cα atoms) read from each file |
+| `seq_identity` | % identical residues among aligned pairs |
+| `DALIscore`, `SPscore`, `sTMscore` | Dali Z-score, SP-score, SSE-weighted TM-score |
+| `alignment` | DataFrame: `residue1`, `residue2`, `chain1`, `chain2`, `aatype1`, `aatype2`, `distance` |
+| `translation_rot`, `translation_vec`, `translate_xyz()` | Transformation that moves pdb1 onto pdb2 |
 
----
+Things that commonly go wrong:
+- **All `alignment` columns are strings.** Compare residues with `str(42)` and convert
+  `distance` with `.astype(float)` before doing arithmetic.
+- **pymican hides MICAN's errors.** A failed run surfaces as a `KeyError` (e.g. `'mode'`) or a
+  parsing error. Call `run_mican(pdb1, pdb2, options)` to see MICAN's actual message (missing
+  file, no Cα atoms, unsupported chain ID, ...).
+- **`-i N` mixes ranks in pymican.** With `options='-w -i 2'`, the alignment, `TMscore1/2`,
+  coverage and rotation are for rank 2, but `TMscore`, `rmsd`, `nalign`, `seq_identity`,
+  `DALIscore`, `SPscore` and `sTMscore` stay at rank 1. Use `align_rank()` for any rank other
+  than 1.
 
-## Workflow A: Compare Two Proteins
+## Choose the alignment mode
 
-**Step 1 — Choose alignment mode** (if not specified, use RW and announce it):
+If the user does not specify one, use RW (`-w`) and say so: it finds sequential alignments too,
+and also catches rearranged topologies that a sequential search would miss.
 
 | Situation | Mode | Option |
 |-----------|------|--------|
-| Same protein, different states | Sequential (SQ) | `-s` |
-| Unknown relationship (default) | General-purpose (RW) | `-w` |
-| Want reverse/antiparallel SSEs too | Exhaustive (RR) | `-r` |
-| Large-scale screening | add Fast | `-f` |
+| General comparison, unknown relationship (default) | Rewiring (RW) | `-w` |
+| Sequence order must be preserved (same protein in different states, comparing with TM-align-style results) | Sequential (SQ) | `-s` |
+| Also allow segments in the reverse direction (most exhaustive, slower) | Rewiring + reverse (RR) | `-r` |
+| Large screening where speed matters | add fast mode | `-f` |
 
-**Step 2 — Run and report all TM-score variants** (use Standard Output Block in `score-guide.md`):
+## Workflow A: Compare two structures
 
-```python
-aln = m.align(pdb1='a.pdb', pdb2='b.pdb', options='-w')
-tm_mean = (aln.TMscore1 + aln.TMscore2) / 2
-# Print TMscore, TMscore1+coverage1, TMscore2+coverage2, TM mean, RMSD, nalign, seq_identity
-# Size warning if max(size1,size2)/min(size1,size2) >= 1.5
-```
+1. Run the alignment in the chosen mode.
+2. Report both normalizations — `TMscore1` with `coverage1` and `TMscore2` with `coverage2` —
+   plus RMSD, `nalign`, `seq_identity` and Dali Z, using the template in `score-guide.md`.
+   A single TM-score is ambiguous because it depends on which length it was divided by.
+3. Interpret (details in `score-guide.md`):
 
-**Step 3 — Interpret results:**
+   | TM-score | Meaning |
+   |----------|---------|
+   | ≥ 0.8 | Nearly identical fold; often the same protein or close homologs |
+   | 0.5–0.8 | Same fold |
+   | 0.3–0.5 | Partial similarity (a shared domain or sub-structure) |
+   | < 0.3 | No meaningful similarity (unrelated pairs typically score 0.2–0.3) |
 
-| TM-score | Meaning |
-|----------|---------|
-| > 0.9 | Highly similar |
-| > 0.7 | Similar, notable differences (distantly related) |
-| > 0.5 | Same fold class |
-| ≤ 0.5 | Low similarity — likely different folds |
+   - When sizes differ (ratio ≥ 1.5), say which normalization answers the question: normalizing
+     by the smaller protein asks "is it contained in the larger one?"; normalizing by the larger
+     asks "are they similar overall?". Low coverage of the larger protein means a domain-level
+     match, not whole-protein similarity.
+   - Structure similarity alone does not establish or exclude an evolutionary relationship; see
+     `score-guide.md` before commenting on homology.
 
-- **Size ratio ≥ 1.5**: TMscore (shorter-normalized) is inflated. Use TMscore1 or TMscore2 instead, or TM mean for a symmetric view.
-- **Low coverage**: only part of one protein aligns — possible domain match, not whole-protein similarity.
-- **`seq_identity` and evolutionary relationship**: structural comparison alone cannot determine evolutionary relationship. See `score-guide.md §seq_identity` for correct interpretation — avoid asserting "structural analog" or "no evolutionary relationship" from scores alone.
+## Workflow B: Residue correspondence / active-site mapping
 
----
+1. Align (RW unless sequence order matters).
+2. Look up residues in `aln.alignment` (strings!). Residues missing from the table are
+   unaligned — report them as "no counterpart", not as an error.
+3. Flag pairs whose Cα `distance` exceeds 4.5 Å as uncertain: they were placed in the
+   alignment but are not spatially superposed, so they should not be treated as functionally
+   equivalent.
+4. Print a table (pdb1 residue, aa, chain → pdb2 residue, aa, chain, distance, note) and save
+   CSV if asked. Code: `code-examples.md` § Residue correspondence.
 
-## Workflow B: Residue Correspondence / Active-Site Mapping
+## Workflow C: Multi-chain complexes
 
-**Step 1** — Run alignment (RW recommended).
+By default MICAN reads **all chains** of each file and aligns the complexes as wholes; one chain
+of pdb1 may be matched to parts of several chains of pdb2.
 
-**Step 2** — Query `aln.alignment`. Key trap: `residue1` and `residue2` are **strings** — use `str(N)` for lookup.
+1. Align the complexes; report the usual scores plus **C3score** and the per-chain results from
+   `chain_summary(run_mican(...))`.
+   - C3score is the fraction of aligned residues that follow a one-to-one chain mapping. 1.0
+     means every chain of pdb1 corresponds to a single chain of pdb2; low values mean the
+     alignment jumps between chains, so the subunit correspondence is unclear.
+   - Per-chain rows give, for each pdb1 chain, its coverage and how it splits over pdb2 chains.
+2. To compare specific subunits, select chains with `-c1` / `-c2` (`-c1 A`, `-c1 AB` for
+   chains A and B). The `chain1` / `chain2` columns of `aln.alignment` tell which chain each
+   aligned residue belongs to.
 
-**Step 3** — Flag unreliable pairs: Cα distance > 4.5 Å means the aligned residues are spatially distant and should not be treated as functionally corresponding. Add a `note` column: `'⚠ uncertain (>4.5 Å)'` or `'OK'`.
+Code: `code-examples.md` § Complexes.
 
-**Step 4** — Print table and warn if any pairs exceed 4.5 Å. Save to CSV if requested.
+## Workflow D: Superposed coordinates
 
-Use code from `references/code-examples.md` — Residue Correspondence.
+The transformation moves **pdb1 onto pdb2**; pdb2's coordinates never change.
+- Structure file for a viewer: `write_superposed(pdb1, pdb2, 'pdb1_on_pdb2.pdb', '-w')` writes
+  pdb1's atoms in pdb2's frame; open it together with the original pdb2.
+- Arbitrary coordinates (e.g. a ligand or a site from pdb1): `aln.translate_xyz(xyz)` with an
+  (N, 3) array.
+- MICAN's own `-o file` is a RasMol script (MODEL 1 = moved pdb1, MODEL 2 = pdb2) and `-a file`
+  writes the alignment as text; use these only when the user asks for MICAN's file formats.
 
----
+Code: `code-examples.md` § Superposition.
 
-## Workflow C: Internal Symmetry and Rotational Symmetry
+## Workflow E: Batch comparison
 
-This is the most complex workflow. Follow every step in order.
+Loop over pairs with pymican; each call is a separate process, so a thread pool parallelizes
+well. Keep `TMscore1` and `TMscore2` for every pair (the score is asymmetric), flag pairs whose
+size ratio is ≥ 1.5, catch failures per pair instead of aborting the batch, and add `-f` for
+more than ~100 structures. Sort or cluster by the normalization that fits the question (the
+mean of both is a good symmetric default). Code: `code-examples.md` § Batch comparison.
 
-### Step 1: Self-comparison (always start here)
+## Workflow F: Alternative (sub-optimal) alignments
 
-Run the protein against itself with large `-g` and `-n`:
+MICAN ranks several distinct solutions (different superpositions), not just the best one. They
+are useful when the top alignment is ambiguous — repeats, multi-domain proteins, or when the user
+asks for other possible matches.
 
-```python
-# Use subprocess, not pymican.mican() — need raw output including rotation matrices
-result = subprocess.run(
-    [BINFILEPATH, pdb, pdb, '-w', '-g', '1000', '-n', '20'],
-    capture_output=True, text=True
-)
-```
+- `-n N` sets how many solutions to report (default 5); `-g K` sets how many candidates are
+  explored (default 50). Raise `-g` to 200–1000 when fewer than N solutions come back.
+- `brief_table(run_mican(pdb1, pdb2, '-w -n 10 -g 500'))` gives the scores of every rank;
+  `align_rank(pdb1, pdb2, rank=2, options='-w -n 10 -g 500')` gives the full result of one rank.
 
-Read the "Brief description" table from stdout. **DALI Z > 2 in Rank 2+** means statistically significant internal symmetry.
+Code: `code-examples.md` § Sub-optimal alignments.
 
-### Step 2: Classify sub-optimal solutions — True vs False Positives
+## Input files
 
-Before any further analysis, separate the solutions:
+- PDB and PDBx/mmCIF are both accepted; the format is detected from the file contents.
+  mmCIF needs pymican ≥ 1.13.0 — with older versions MICAN reports "No CA atoms" for a .cif
+  file; then upgrade (`pip install -U pymican`) or convert the file to PDB.
+- Only the first model is read, and each Cα atom (ATOM or HETATM, e.g. MSE) counts as a residue.
+  Alternate locations of a Cα are each counted, which inflates `size1`/`size2`; keep a single
+  altloc first if the residue count looks too large.
+- mmCIF files use author chain IDs. Chain IDs longer than one character are not supported: select
+  single-character chains with `-c1`/`-c2`, or the run stops with an error.
 
-**True symmetry operations** (analyze these):
-- Rotation angle **> 30°**
-- Residue correspondence between **different** repeat units (u0→u1, u0→u2, etc.)
-- Solutions appear in **pairs** (forward + reverse direction)
-
-**False positives** (discard these):
-- Rotation angle **< 20°** — nearly identity transformation; MICAN found spatially nearby regions, not a symmetry operation
-- Correspondence **within the same unit** (u0→u0)
-
-**Pseudo higher-order candidates** (examine *after* confirming true Cn):
-- Same rotation axis as true Cn ranks (within ~1°)
-- t∥ ≈ 0 (pure rotation, no screw component)
-- DALI Z > 2
-- Angle close to k × (360°/2n) within **~10°**, but NOT matching true Cn within ~2°
-- Example: C3 confirmed → ranks showing angles **halfway between** the 120° Cn steps (near odd multiples of 360°/2n = 60°) → pseudo C6 candidates
-
-To get rotation angle for each rank, use `-z -i RANK` and parse rotation matrix lines starting with ` 1   `, ` 2   `, ` 3   `. Then: `cos θ = (trace(R) − 1) / 2`.
-
-### Step 3: Rotation matrix analysis — identify Cn symmetry
-
-For each true-symmetry rank:
-1. **Shared axis?** If all ranks have rotation axes within ~1° of each other → single true symmetry axis exists.
-2. **Cn match?** Check if rotation angles equal `k/n × 360°` (within ~1°) for some integer n.
-3. **Pure rotation or screw?** Compute `t∥ = t · axis`. If ≈ 0 → pure Cn rotation. If ≠ 0 → screw symmetry.
-4. **Pseudo higher-order symmetry?** After confirming true Cn, check remaining significant ranks (same axis ±1°, DALI Z > 2, t∥ ≈ 0) whose angles do NOT match any Cn multiple. Test whether those angles match k × (360°/2n) within **~10°**:
-   - If yes → **pseudo C(2n)** character. **Always state both** in the conclusion: *"True symmetry: Cn. Visually pseudo C(2n) — repeat units are structurally similar but not strictly equivalent (Δ~X° from exact C(2n) angles)."*
-   - If no → note the unexplained rank(s) and consider domain effects.
-   - Example: C3 true → additional ranks near halfway-between angles (odd multiples of 360°/2n, within ~10°) → pseudo C6.
-   - Use detection code from `references/symmetry-analysis.md` §2.
-   - Do not assert fold class (e.g., β-propeller) from angles alone.
-
-Use code from `references/symmetry-analysis.md` §2.
-
-### Step 4: Cyclic permutation — algebraic proof of Cn
-
-Map each residue to its repeat unit index. Check whether the unit-level mapping across ranks forms all cyclic shifts {0, 1, ..., n−1}. If yes → Cn is algebraically proven.
-
-Estimate repeat unit size from alignment shifts — **use Cn-matched ranks only, then pick the smallest dominant shift**:
-- First, filter to **Cn-matched ranks only**: those whose angle matches k/n × 360° within ~2°.
-  Do NOT include pseudo-symmetric ranks (e.g., ranks at ~38.5° in a C4 protein whose
-  shifts reflect intra-unit partial alignments, not full inter-unit steps).
-- Among Cn-matched ranks, find the most common (dominant) non-zero shift per rank.
-- Pick the rank whose dominant shift is **smallest** — that is the 1-unit rank (shift = 1×unit).
-- Compute GCD using only the **dominant shift values** (filter out minority shifts first).
-  Do NOT compute GCD over all shifts — even one outlier shift (e.g., 44 when dominant is 42)
-  will collapse GCD(42, 44) = 2, giving a wrong result.
-- Example: in C3, Rank 2 (120°) dominant shift = 50 (= 1×unit). GCD({50, 50, ...}) = 50. ✓
-
-Use code from `references/symmetry-analysis.md` §4.
-
-### Step 5: Check for multiple domains first (do this before Step 3 if uncertain)
-
-Signs that the protein has multiple structural domains:
-- High-scoring ranks (Rank 2–K) cover only **part** of the chain (res1 max ≤ X)
-- Lower ranks suddenly expand to the full chain (res1 max jumps)
-- Some ranks show angles that don't fit any Cn hypothesis → those ranks span a domain boundary
-
-If domain signals appear:
-1. Use `extract_domain()` to split the PDB at the estimated boundary.
-2. Restart from Step 1 for each domain independently.
-3. For the symmetric domain, also **estimate the repeat unit count** using `estimate_unit_size()` (§4) on its sub-optimal alignments. Report this count explicitly (e.g., "4 repeat units of ~60 residues each").
-
-Use code from `references/symmetry-analysis.md` §4.
-
----
-
-## Workflow D: Conformational Change (Apo/Holo)
-
-**Step 0 — Check for internal symmetry first.**
-If the protein has tandem repeats or Cn symmetry (check with Workflow C), do NOT
-analyze the whole chain at once. Instead: identify repeat units → extract each unit
-from both states → run Steps 1–2 on each unit independently.
-See `references/conformational-analysis.md` — Workflow for repeat proteins.
-
-**Step 1** — Align on a conserved core using `-q` threshold:
-- Use **SQ mode** (`-s`) — same protein, sequence order is conserved
-- **`-q 3.0` is recommended** for most conformational change analyses
-- Tighten to `-q 2.0` only when the change is small and you need a stricter anchor
-- The core = residues that stay fixed between states (the superposition anchor)
-
-**Step 2** — Apply the rotation matrix to ALL residues (not just aligned ones), then measure Cα displacement:
-- `in_core=True` residues: small displacement — structurally invariant anchor
-- `in_core=False` with large displacement (> 5 Å): moved regions — conformational change
-- Large jump between core RMSD (~2 Å) and non-core RMSD (>> 5 Å) → rigid-body domain movement
-
-Use `analyze_conformational_change()` from `references/conformational-analysis.md`.
-
----
-
-## Key CLI Options
+## Key CLI options
 
 | Option | Default | Notes |
 |--------|---------|-------|
-| `-n INT` | 5 | Solutions to return; use 20 for symmetry analysis |
-| `-g INT` | 50 | GH candidates; use 1000 for symmetry/sub-optimal analysis |
-| `-q FLOAT` | — | Cα distance cutoff (tighter = more precise core) |
-| `-i INT` | — | Retrieve rank N solution (requires `-z`) |
-| `-z` | off | Machine-readable output; **required** for `-i` and rotation matrix parsing |
-| `-c1 ID` / `-c2 ID` | — | Chain ID for pdb1/pdb2 |
+| `-s` / `-w` / `-r` | SQ | Alignment mode (see above) |
+| `-f` | off | Fast mode for screening (same as `-g 15`) |
+| `-c1 IDs` / `-c2 IDs` | all chains | Chains of pdb1 / pdb2, e.g. `-c1 AB` |
+| `-n INT` | 5 | Number of solutions reported |
+| `-g INT` | 50 | Candidates explored; raise for more or better sub-optimal solutions |
+| `-i INT` | 1 | Report the i-th solution in detail (use `align_rank()` from Python) |
+| `-q REAL` | 10.0 | Maximum Cα distance (Å) for aligned pairs; lower it for a stricter core |
 | `-l INT` | 3 | Minimum segment length |
+| `-t INT` | 0 | Score used to rank solutions: 0 sTMscore, 1 TMscore, 2 Dali Z |
+| `-o` / `-a` / `-m` file | — | Superposition (RasMol script) / alignment / matrix files |

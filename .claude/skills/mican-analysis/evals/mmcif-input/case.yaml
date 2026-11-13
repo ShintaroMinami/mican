@@ -1,0 +1,8 @@
+schema_version: "1.1"
+name: mmcif-input
+expected_outcome: |
+  Aligns the mmCIF file directly (no conversion needed) and reports both TM-score
+  normalizations: 0.502 normalized by the mmCIF structure (80 residues) and 0.418 normalized
+  by the PDB structure (96 residues) in RW mode, with coverage, RMSD and an interpretation.
+context:
+  scaffold_script: place-files.sh

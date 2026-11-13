@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: suboptimal-second-rank
+expected_outcome: |
+  Shows a table of ranked solutions with their scores, then the residue pairs of rank 2 with
+  rank 2's own scores. With -w, rank 1 has TM-score 0.553 (pdb1-normalized), 55 aligned
+  residues, RMSD 1.979; rank 2 has 0.465, 51 residues, RMSD 3.000.

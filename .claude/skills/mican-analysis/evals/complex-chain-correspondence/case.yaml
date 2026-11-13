@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: complex-chain-correspondence
+expected_outcome: |
+  Aligns all chains of both complexes and reports C3score together with per-chain results:
+  chain E of 1dfj maps mainly to a single chain of 5e29, while chain I is spread over
+  several 5e29 chains, so the chain correspondence is not one-to-one (C3score about 0.5).
+  TM-scores normalized by each complex are reported.
