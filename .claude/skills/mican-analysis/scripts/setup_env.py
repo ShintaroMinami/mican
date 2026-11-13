@@ -82,8 +82,8 @@ def main():
     if not install_pymican():
         print("\n⚠ Installation failed.")
         print("  You can also build from source:")
-        print("    git clone https://github.com/ShintaroMinami/pymican")
-        print("    cd pymican && make && python setup.py install")
+        print("    git clone https://github.com/ShintaroMinami/mican")
+        print("    cd mican && pip install .")
         sys.exit(1)
 
     # 4. Verify

@@ -1,7 +1,7 @@
 {
   "name": "mican",
-  "version": "1.0.2",
-  "description": "MICAN protein structure alignment — skills for structural comparison, symmetry analysis, residue correspondence, conformational change analysis, and domain detection.",
+  "version": "1.1.0",
+  "description": "MICAN protein structure alignment — compare and superpose protein structures (PDB/mmCIF), interpret TM-scores, map corresponding residues, align multi-chain complexes, run batch comparisons, and explore alternative alignments.",
   "author": {
     "name": "ShintaroMinami"
   }

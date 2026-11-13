@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: superpose-to-file
+expected_outcome: |
+  Writes 1cfd_on_1cll.pdb, a plain PDB file with the atoms of 1cfd transformed into the
+  coordinate frame of 1cll by MICAN's superposition, and tells the user to open it together
+  with the unchanged 1cll.pdb.
