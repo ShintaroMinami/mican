@@ -1,0 +1,46 @@
+name: Publish to PyPI
+
+# Publishes the source distribution (sdist) to PyPI through Trusted Publishing.
+# Runs when a GitHub release is published, or manually for an existing tag:
+#   gh workflow run publish.yml -f tag=v1.13.0
+
+on:
+  release:
+    types: [released]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to publish (e.g. v1.13.0)"
+        required: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # required for Trusted Publishing
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+    steps:
+      - name: Check out the release tag
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.TAG }}
+          fetch-depth: 0  # setuptools_scm derives the version from tags
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Build sdist
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build --sdist
+
+      - name: Check that the version matches the tag
+        run: |
+          ls dist/
+          test -f "dist/pymican-${TAG#v}.tar.gz"
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
