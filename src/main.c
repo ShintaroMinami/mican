@@ -115,7 +115,8 @@ int main(int argc, char *argv[]) {
 void usage(void) {
   printf(
       "\n"	 
-      " USAGE: %% mican protein1 protein2 [OPTION]\n\n"
+      " USAGE: %% mican protein1 protein2 [OPTION]\n"
+      "        (protein1/2: PDB or PDBx/mmCIF file, detected from its contents)\n\n"
       " Description:\n"
       "  -f             fast mode (same as \"-g %d\")\n"
       "  -s             sequential (SQ) alignment mode\n"

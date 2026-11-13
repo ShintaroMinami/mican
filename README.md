@@ -106,10 +106,15 @@ Attributes of Alignment object
 % mican test/test1.1.pdb test/test1.2.pdb -a align.aln -o sup.pdb
 ```
 
+Input structures can be given in PDB or PDBx/mmCIF format; the format is detected from the file contents, not the file name.
+Only the first model is read.
+For mmCIF files, the author chain IDs (`auth_asym_id`) are used. Only single-character chain IDs are supported; for a file that also contains longer chain IDs, select single-character chains with `-c1`/`-c2`.
+
 For more details, please read the usage.
 
 ```
  USAGE: % mican protein1 protein2 [OPTION]
+        (protein1/2: PDB or PDBx/mmCIF file, detected from its contents)
 
  Description:
   -f             fast mode (same as "-g 15")

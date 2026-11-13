@@ -159,7 +159,7 @@ class mican:
         Paremeters
         ----------
         pdb1, pdb2 : str
-            Input PDB files.
+            Input structure files (PDB or PDBx/mmCIF), or their contents.
         options : (str | [str,...]), default=[]
             Extra potions for mican calculation.
             For the option details please see (https://github.com/ShintaroMinami/mican).

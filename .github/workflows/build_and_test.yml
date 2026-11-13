@@ -31,4 +31,6 @@ jobs:
         run: pip install .
       
       - name: Test
-        run: python tests/test_malisam.py
+        run: |
+          python tests/test_malisam.py
+          python tests/test_mmcif.py
